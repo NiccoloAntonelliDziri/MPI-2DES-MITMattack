@@ -1,29 +1,29 @@
 # tool macros
 CC := mpicc
 CFLAGS := # FILL: compile flags
-DBGFLAGS := -g
-COBJFLAGS := $(CFLAGS) -c
 
 # path macros
 BIN_PATH := bin
 SRC_PATH := src
 
 # compile macros
-TARGET_NAME := golden_collision
-TARGET := $(BIN_PATH)/$(TARGET_NAME)
-
-# src files & obj files
-SRC := $(foreach x, $(SRC_PATH), $(wildcard $(addprefix $(x)/*,.c*)))
+TARGET_IT := $(BIN_PATH)/it_golden
+TARGET_PAR := $(BIN_PATH)/pr_golden
 
 # clean files list
-CLEAN_LIST := $(TARGET) \
-			  $(DISTCLEAN_LIST)
+CLEAN_LIST := $(TARGET_IT) \
+			  $(TARGET_PAR)
 
 # default rule
 default: makedir all
 
 # non-phony targets
-$(TARGET): $(SRC) 
+$(TARGET_IT): $(SRC_PATH)/mitm.c
+	@echo Programme séquentiel:
+	$(CC) $< $(CFLAGS) -o $@ $(CFLAGS)
+
+$(TARGET_PAR): $(SRC_PATH)/mitm_paral.c
+	@echo Programme parallèle:
 	$(CC) $< $(CFLAGS) -o $@ $(CFLAGS)
 
 # phony rules
@@ -32,7 +32,13 @@ makedir:
 	@mkdir -p $(BIN_PATH)
 
 .PHONY: all
-all: $(TARGET)
+all: seq par
+
+.PHONY: seq
+seq: $(TARGET_IT)
+
+.PHONY: par
+par: $(TARGET_PAR)
 
 .PHONY: clean
 clean:
