@@ -17,8 +17,6 @@ TARGET_DEBUG := $(DBG_PATH)/$(TARGET_NAME)
 
 # src files & obj files
 SRC := $(foreach x, $(SRC_PATH), $(wildcard $(addprefix $(x)/*,.c*)))
-OBJ := $(addprefix $(OBJ_PATH)/, $(addsuffix .o, $(notdir $(basename $(SRC)))))
-OBJ_DEBUG := $(addprefix $(DBG_PATH)/, $(addsuffix .o, $(notdir $(basename $(SRC)))))
 
 # clean files list
 DISTCLEAN_LIST := $(OBJ) \
@@ -31,17 +29,8 @@ CLEAN_LIST := $(TARGET) \
 default: makedir all
 
 # non-phony targets
-$(TARGET): 
-	$(CC) $(CFLAGS) -o $@ $(CFLAGS)
-
-$(OBJ_PATH)/%.o: $(SRC_PATH)/%.c*
-	$(CC) $(COBJFLAGS) -o $@ $<
-
-$(DBG_PATH)/%.o: $(SRC_PATH)/%.c*
-	$(CC) $(COBJFLAGS) $(DBGFLAGS) -o $@ $<
-
-$(TARGET_DEBUG): $(OBJ_DEBUG)
-	$(CC) $(CFLAGS) $(DBGFLAGS) $(OBJ_DEBUG) -o $@
+$(TARGET): $(SRC) 
+	$(CC) $< $(CFLAGS) -o $@ $(CFLAGS)
 
 # phony rules
 .PHONY: makedir
@@ -50,9 +39,6 @@ makedir:
 
 .PHONY: all
 all: $(TARGET)
-
-.PHONY: debug
-debug: $(TARGET_DEBUG)
 
 .PHONY: clean
 clean:
