@@ -30,6 +30,9 @@ int world_size;
 int world_rank;
 int root;
 
+#define TAG_DATA 0
+#define TAG_END 1
+
 /************************ tools and utility functions *************************/
 
 double wtime()
@@ -123,7 +126,9 @@ static const u64 PRIME = 0xfffffffb;
 /* allocate a hash table with `size` slots (12*size bytes) */
 void dict_setup(u64 size)
 {
-	dict_size = size;
+    // Divise la taille du dict (1.125 * 2^n) par le nombre de processus plus un peu de marge.
+	dict_size = size / world_size + 1;
+
 	char hdsize[8];
 	human_format(dict_size * sizeof(*A), hdsize);
 	printf("Dictionary size: %sB\n", hdsize);
@@ -224,10 +229,67 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
 {
     double start = wtime();
     u64 N = 1ull << n;
-    for (u64 x = 0; x < N; x++) {
-        u64 z = f(x);
-        dict_insert(z, x);
+
+    u64 petit_N = N / world_size;
+    u64 reste = N % world_size;
+
+    if (world_rank < reste) {
+        petit_N++;
     }
+
+    int flag = 0;
+    MPI_Status status;
+    MPI_Request request;
+
+    // i=0: valeur f(x)
+    // i=1: valeur x
+    u64 send_buffer[2];
+    u64 receive_buffer[2];
+    
+    int compteur_proc = 1;
+
+    MPI_Irecv(receive_buffer, 2, MPI_UINT64_T, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
+    for (u64 x = world_rank * petit_N; x < (world_rank + 1) * petit_N; x++) {
+        u64 z = f(x);
+        send_buffer[0] = z;
+        send_buffer[1] = x;
+        int rank_receiver = z % world_size;
+        MPI_Bsend(send_buffer, 2, MPI_UINT64_T, rank_receiver, TAG_DATA, MPI_COMM_WORLD);
+
+        MPI_Test(&request, &flag, &status);
+        if (!flag) {
+            if (status.MPI_TAG == TAG_DATA) {
+                dict_insert(receive_buffer[0], receive_buffer[1]);
+            } else {    // MPI_TAG == TAG_END
+                compteur_proc++;
+            }
+            MPI_Irecv(receive_buffer, 2, MPI_UINT64_T, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
+            flag = 0;
+        }
+    }
+
+    // Envoie un message à tout le monde sauf à nous même
+    for (int i = 0; i < world_size; i++) {
+        if (i != world_rank) {
+            MPI_Bsend(NULL, 0, MPI_UINT64_T, i, TAG_END, MPI_COMM_WORLD);
+        }
+    }
+
+    while (compteur_proc != world_size) {
+        MPI_Test(&request, &flag, &status);
+        if (!flag) {
+            if (status.MPI_TAG == TAG_DATA) {
+                dict_insert(receive_buffer[0], receive_buffer[1]);
+            } else {    // MPI_TAG == TAG_END
+                compteur_proc++;
+            }
+            if (compteur_proc < world_size) {
+                MPI_Irecv(receive_buffer, 2, MPI_UNSIGNED_LONG_LONG, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
+            }
+            flag = 0;
+        }
+    }
+    ////////////////////////////////////////
 
     double mid = wtime();
     printf("Fill: %.1fs\n", mid - start);
@@ -235,7 +297,7 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
     int nres = 0;
     u64 ncandidates = 0;
     u64 x[256];
-    for (u64 z = 0; z < N; z++) {
+    for (u64 z = world_rank * petit_N; z < (world_rank + 1) * petit_N; z++) {
         u64 y = g(z);
         int nx = dict_probe(y, 256, x);
         assert(nx >= 0);
@@ -324,6 +386,8 @@ int main(int argc, char **argv)
         printf("Running with n=%d, C0=(%08x, %08x) and C1=(%08x, %08x)\n", 
             (int) n, C[0][0], C[0][1], C[1][0], C[1][1]);
     }
+
+    // printf("n: %lu; n_process:%lu\n", n, n_process);
 	dict_setup(1.125 * (1ull << n));
 
 	/* search */
