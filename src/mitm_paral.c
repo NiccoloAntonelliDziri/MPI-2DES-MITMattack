@@ -260,8 +260,10 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
         if (!flag) {
             if (status.MPI_TAG == TAG_DATA) {
                 dict_insert(receive_buffer[0], receive_buffer[1]);
-            } else {    // MPI_TAG == TAG_END
+                printf("proc %d source %d\n",world_rank,status.MPI_SOURCE);
+            } else if (status.MPI_TAG == TAG_END) {    // MPI_TAG == TAG_END
                 compteur_proc++;
+                printf("proc %d compteur_proc %d, source %d\n",world_rank,compteur_proc,status.MPI_SOURCE);
             }
             MPI_Irecv(receive_buffer, 2, MPI_UINT64_T, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
             flag = 0;
@@ -274,8 +276,13 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
             MPI_Bsend(NULL, 0, MPI_UINT64_T, i, TAG_END, MPI_COMM_WORLD);
         }
     }
+    int loop_compt=0;
+    printf("world_size %d\n",world_size);
 
-    while (compteur_proc != world_size) {
+    // printf("proc %d compteur_proc %d\n",world_rank,compteur_proc);
+
+    //ATTENTION DISCLAIMER, compteur_proc=9 pour certains proc ALORS QUE WORLD_SIZE VAUT 4 C PAS POSSIBLE
+    while (compteur_proc < world_size) {
         MPI_Test(&request, &flag, &status);
         if (!flag) {
             if (status.MPI_TAG == TAG_DATA) {
@@ -288,31 +295,49 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
             }
             flag = 0;
         }
+        // printf("boucle while, proc %d compt %d\n",world_rank,loop_compt++);
     }
-    ////////////////////////////////////////
 
-    double mid = wtime();
-    printf("Fill: %.1fs\n", mid - start);
+    // MPI_Test(&request, &flag, &status);
+    // while (!flag || compteur_proc < world_size) {
+    //         if (status.MPI_TAG == TAG_DATA) {
+    //             dict_insert(receive_buffer[0], receive_buffer[1]);
+    //         } else {    // MPI_TAG == TAG_END
+    //             compteur_proc++;
+    //         }
+    //         if (!flag || compteur_proc < world_size) {
+    //             MPI_Irecv(receive_buffer, 2, MPI_UNSIGNED_LONG_LONG, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &request);
+    //         }
+    //         flag = 0;
+    //    MPI_Test(&request, &flag, &status);
+    // }
+    printf("reussi\n");
+
+
+    ////////////////////////////////////////////////
+
+    // double mid = wtime();
+    // printf("Fill: %.1fs\n", mid - start);
     
     int nres = 0;
-    u64 ncandidates = 0;
-    u64 x[256];
-    for (u64 z = world_rank * petit_N; z < (world_rank + 1) * petit_N; z++) {
-        u64 y = g(z);
-        int nx = dict_probe(y, 256, x);
-        assert(nx >= 0);
-        ncandidates += nx;
-        for (int i = 0; i < nx; i++)
-            if (is_good_pair(x[i], z)) {
-            	if (nres == maxres)
-            		return -1;
-            	k1[nres] = x[i];
-            	k2[nres] = z;
-            	printf("SOLUTION FOUND!\n");
-            	nres += 1;
-            }
-    }
-    printf("Probe: %.1fs. %" PRId64 " candidate pairs tested\n", wtime() - mid, ncandidates);
+    // u64 ncandidates = 0;
+    // u64 x[256];
+    // for (u64 z = world_rank * petit_N; z < (world_rank + 1) * petit_N; z++) {
+    //     u64 y = g(z);
+    //     int nx = dict_probe(y, 256, x);
+    //     assert(nx >= 0);
+    //     ncandidates += nx;
+    //     for (int i = 0; i < nx; i++)
+    //         if (is_good_pair(x[i], z)) {
+    //         	if (nres == maxres)
+    //         		return -1;
+    //         	k1[nres] = x[i];
+    //         	k2[nres] = z;
+    //         	printf("SOLUTION FOUND!\n");
+    //         	nres += 1;
+    //         }
+    // }
+    // printf("Probe: %.1fs. %" PRId64 " candidate pairs tested\n", wtime() - mid, ncandidates);
     return nres;
 }
 
