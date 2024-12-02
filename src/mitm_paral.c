@@ -8,7 +8,6 @@
 #include <err.h>
 #include <assert.h>
 
-
 #include <mpi.h>
 
 typedef uint64_t u64;       /* portable 64-bit integer */
@@ -26,6 +25,10 @@ struct entry *A;   /* the hash table */
 /* (P, C) : two plaintext-ciphertext pairs */
 u32 P[2][2] = {{0, 0}, {0xffffffff, 0xffffffff}};
 u32 C[2][2];
+
+int world_size;
+int world_rank;
+int root;
 
 /************************ tools and utility functions *************************/
 
@@ -307,24 +310,20 @@ void process_command_line_options(int argc, char ** argv)
 
 int main(int argc, char **argv)
 {
+    root=0;
     MPI_Init(&argc, &argv);
-    int root=0;
 
-	int world_size;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-
-	int process_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
-
-    
     // voir si il est pas judicieux de mettre le MPI_init après pour éviter que chacun des coeurs fasse le calcul
     //ATTENTION si on demande qu'au process root de faire la ligne suivante, ça bug car les autres process n'auront pas accès à f et g
 	process_command_line_options(argc, argv);
 
-    printf("Running with n=%d, C0=(%08x, %08x) and C1=(%08x, %08x)\n", 
-        (int) n, C[0][0], C[0][1], C[1][0], C[1][1]);
-
+    if (world_rank == root) {
+        printf("Running with n=%d, C0=(%08x, %08x) and C1=(%08x, %08x)\n", 
+            (int) n, C[0][0], C[0][1], C[1][0], C[1][1]);
+    }
 	dict_setup(1.125 * (1ull << n));
 
 	/* search */
