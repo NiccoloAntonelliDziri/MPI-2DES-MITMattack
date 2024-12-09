@@ -14,6 +14,8 @@ TARGET_PAR := $(BIN_PATH)/pr_golden
 CLEAN_LIST := $(TARGET_IT) \
 			  $(TARGET_PAR)
 
+COMMANDS_FILE := "commands.txt"
+
 # default rule
 default: makedir all
 
