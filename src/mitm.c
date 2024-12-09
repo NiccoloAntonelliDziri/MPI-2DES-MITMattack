@@ -276,7 +276,7 @@ void process_command_line_options(int argc, char ** argv)
                 switch (ch) {
                 case 'n':
                         n = atoi(optarg);
-                        mask = (1 << n) - 1;
+                        mask = (1ull << n) - 1;
                         break;
                 case '0':
                         set |= 1;
