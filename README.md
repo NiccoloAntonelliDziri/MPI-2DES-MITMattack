@@ -7,4 +7,11 @@ Command example for using the parallel program :
     Results : 
         Solution found: (648c, 394c) [checked OK]
 
+    mpiexec -- ./bin/pr_golden --n 5 --C0 fe1563ba4e84bb7d --C1 b6c9f8405d20396a
+
+    Results :
+        Solution found: (6, 1f) [checked OK]
+
+
+
 
