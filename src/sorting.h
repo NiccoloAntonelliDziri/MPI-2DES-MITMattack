@@ -3,12 +3,12 @@
 
 #include "utils.h"
 
-void display(u64 k, u64 v, int taille);
+void display(entry tab[], int taille);
 
 int proc(entry);
 
 // swap function to swap two values
-void swap(u64 k1, u64 k2, u64 v1, u64 v2);
+void swap(entry *first, entry*second);
 
 // Partition method which selects a pivot
 // and places each element which is less than the pivot value
