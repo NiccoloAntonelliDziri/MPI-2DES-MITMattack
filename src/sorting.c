@@ -2,24 +2,24 @@
 
 #include <stdio.h>
 
-void display(entry tab[], int taille){
+void display(clefvaleur tab[], int taille){
     for (int i = 0; i < taille; i++) {
         printf("%d ", proc(tab[i]));
     }
     printf("\n");
 }
 
-int proc(entry e){
+int proc(clefvaleur e){
     return e.k % world_size;
 }
 
-void swap(entry *first, entry*second){
-    entry temp = *first;
+void swap(clefvaleur *first, clefvaleur *second){
+    clefvaleur temp = *first;
     *first = *second;
     *second = temp;
 }
 
-int partition(entry tab[], int lower, int upper) {
+int partition(clefvaleur tab[], int lower, int upper) {
     int i = lower;
     int pivot = proc(tab[lower]);
     
@@ -37,7 +37,7 @@ int partition(entry tab[], int lower, int upper) {
     return i;
 }
 
-void quickSort(entry tab[], int lower, int upper){
+void quickSort(clefvaleur tab[], int lower, int upper){
     if (upper - 1 > lower) {
         int partitionIndex = partition(tab, lower, upper);
 

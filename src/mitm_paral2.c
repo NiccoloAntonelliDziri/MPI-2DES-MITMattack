@@ -238,7 +238,7 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
     }
 
     // Alloue un tableau à trier
-    struct entry *tab = (struct entry*) malloc(sizeof(struct entry) * petit_N);
+    clefvaleur *tab = (clefvaleur*) malloc(sizeof(clefvaleur) * petit_N);
     int indice = 0;
 
     // Calcul première boucle
@@ -256,37 +256,49 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
     int tailles[world_size];
     int compteur = 0;
     for (int i = 1; i < petit_N; i++) {
+        compteur++;
         if (proc(tab[i - 1]) != proc(tab[i])) {
             tailles[proc(tab[i - 1])] = compteur;
             compteur = 0;
         }
-        compteur++;
     }
 
     // Taille recue depuis chaque processus
     int taille_recue[world_size];
     MPI_Alltoall(tailles, 1, MPI_INT , taille_recue, 1, MPI_INT, MPI_COMM_WORLD);
 
-    // Creation d'un datatype pour le struct entry
+    // Creation d'un datatype pour le struct clefvaleur
     const int nitems = 2;
     int blocklenght[2] = {1,1};
-    MPI_Datatype types[2] = { MPI_UINT32_T, MPI_UINT64_T};
-    MPI_Datatype MPI_ENTRY_TYPE;
+    MPI_Datatype types[2] = { MPI_UINT64_T, MPI_UINT64_T};
+    MPI_Datatype MPI_CLEFVALEUR_TYPE;
     MPI_Aint offsets[2];
-    offsets[0] = offsetof(struct entry, k);
-    offsets[1] = offsetof(struct entry, v);
-    MPI_Type_create_struct(nitems, blocklenght, offsets, types, &MPI_ENTRY_TYPE);
-    MPI_Type_commit(&MPI_ENTRY_TYPE);
+    offsets[0] = offsetof(clefvaleur, k);
+    offsets[1] = offsetof(clefvaleur, v);
+    MPI_Type_create_struct(nitems, blocklenght, offsets, types, &MPI_CLEFVALEUR_TYPE);
+    MPI_Type_commit(&MPI_CLEFVALEUR_TYPE);
 
-    // Calcul de la taille totale du tableau avec les tailles recues
+    // Calcul de la taille totale du tableau avec les tailles recues et du displs
+
+    // CETTE BOUCLE EST FAUSSE
+    // IL FAUT FAIRE LE displs
+    // displs[0] == 0
+    // C'est le cumsum des tailles pour les strides
+    // pareil pour l'autre displs
     int sum = 0;
+    int sum_recu = 0;
+    int displs[world_size];
+    int displs_recue[world_size];
     for (int i = 0; i < world_size; i++) {
-        sum += taille_recue[i];
+        sum += tailles[i];
+        sum_recu += taille_recue[i - 1];
+        displs[i] = sum;
+        displs_recue[i] = sum_recu;
     }
 
-    // Envoi des struct entry, avec toutes les clefs valeurs au bon endroit
-    struct entry tab_recu[sum];
-    MPI_Alltoallv(tab, tailles, tailles, MPI_ENTRY_TYPE, tab_recu, taille_recue, taille_recue, MPI_ENTRY_TYPE, MPI_COMM_WORLD);
+    // Envoi des struct clefvaleur, avec toutes les clefs valeurs au bon endroit
+    clefvaleur tab_recu[sum];
+    MPI_Alltoallv(tab, tailles, displs, MPI_CLEFVALEUR_TYPE, tab_recu, taille_recue, displs_recue, MPI_CLEFVALEUR_TYPE, MPI_COMM_WORLD);
 
     // Insertion de toutes les valeurs dans le dictionnaire au bon endroit
     for (int i = 0; i < sum; i++) {

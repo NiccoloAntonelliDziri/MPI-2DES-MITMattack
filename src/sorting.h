@@ -3,12 +3,12 @@
 
 #include "utils.h"
 
-void display(entry tab[], int taille);
+void display(clefvaleur tab[], int taille);
 
-int proc(entry);
+int proc(clefvaleur);
 
 // swap function to swap two values
-void swap(entry *first, entry*second);
+void swap(clefvaleur *first, clefvaleur*second);
 
 // Partition method which selects a pivot
 // and places each element which is less than the pivot value
@@ -16,8 +16,8 @@ void swap(entry *first, entry*second);
 // tab[]: array to be partitionned
 // lower: lower index
 // upper: upper index
-int partition(entry tab[], int lower, int upper);
+int partition(clefvaleur tab[], int lower, int upper);
 
-void quickSort(entry tab[], int lower, int upper);
+void quickSort(clefvaleur tab[], int lower, int upper);
 
 #endif
