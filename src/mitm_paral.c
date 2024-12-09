@@ -254,10 +254,13 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
         send_buffer[0] = z;
         send_buffer[1] = x;
         int rank_receiver = z % world_size;
-        MPI_Bsend(send_buffer, 2, MPI_UINT64_T, rank_receiver, TAG_DATA, MPI_COMM_WORLD);
+        if (world_rank!=rank_receiver){
+            MPI_Bsend(send_buffer, 2, MPI_UINT64_T, rank_receiver, TAG_DATA, MPI_COMM_WORLD);
+
+        }
 
         MPI_Test(&request, &flag, &status);
-        if (!flag) {
+        if (flag) {
             if (status.MPI_TAG == TAG_DATA) {
                 dict_insert(receive_buffer[0], receive_buffer[1]);
                 printf("proc %d source %d\n",world_rank,status.MPI_SOURCE);
