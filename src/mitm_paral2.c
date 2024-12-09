@@ -11,6 +11,8 @@
 
 #include "utils.h"
 
+#include "sorting.h"
+
 /***************************** global variables ******************************/
 
 u64 n = 0;         /* block size (in bits) */
@@ -22,6 +24,10 @@ struct entry *A;   /* the hash table */
 /* (P, C) : two plaintext-ciphertext pairs */
 u32 P[2][2] = {{0, 0}, {0xffffffff, 0xffffffff}};
 u32 C[2][2];
+
+int world_size;
+int world_rank;
+int root;
 
 /************************ tools and utility functions *************************/
 
@@ -224,7 +230,6 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
     
     if(world_rank < reste) petit_N++;
 
-
     int begin = world_rank * petit_N;
     int end = (world_rank + 1) * petit_N;
     if (world_rank >= reste) {
@@ -233,16 +238,59 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
     }
 
     // Alloue un tableau à trier
-    triplet *tab = (triplet*) malloc(sizeof(triplet) * petit_N);
-    unsigned indice = 0;
+    struct entry *tab = (struct entry*) malloc(sizeof(struct entry) * petit_N);
+    int indice = 0;
 
+    // Calcul première boucle
     for (u64 x = begin; x < end; x++) {
         u64 z = f(x);
-        // dict_insert(z, x);
-        tab[indice].key_value.k = z;
-        tab[indice].key_value.v = x;
-        tab[indice].process = z % world_size;
+        tab[indice].k = z;
+        tab[indice].v = x;
         indice++;
+    }
+
+    // range le tableau selon le numéro de proccus auquel il faut l'aligner
+    quickSort(tab, 0, petit_N);
+
+    // Création du tableau de tailles à envoyer
+    int tailles[world_size];
+    int compteur = 0;
+    for (int i = 1; i < petit_N; i++) {
+        if (proc(tab[i - 1]) != proc(tab[i])) {
+            tailles[proc(tab[i - 1])] = compteur;
+            compteur = 0;
+        }
+        compteur++;
+    }
+
+    // Taille recue depuis chaque processus
+    int taille_recue[world_size];
+    MPI_Alltoall(tailles, 1, MPI_INT , taille_recue, 1, MPI_INT, MPI_COMM_WORLD);
+
+    // Creation d'un datatype pour le struct entry
+    const int nitems = 2;
+    int blocklenght[2] = {1,1};
+    MPI_Datatype types[2] = { MPI_UINT32_T, MPI_UINT64_T};
+    MPI_Datatype MPI_ENTRY_TYPE;
+    MPI_Aint offsets[2];
+    offsets[0] = offsetof(struct entry, k);
+    offsets[1] = offsetof(struct entry, v);
+    MPI_Type_create_struct(nitems, blocklenght, offsets, types, &MPI_ENTRY_TYPE);
+    MPI_Type_commit(&MPI_ENTRY_TYPE);
+
+    // Calcul de la taille totale du tableau avec les tailles recues
+    int sum = 0;
+    for (int i = 0; i < world_size; i++) {
+        sum += taille_recue[i];
+    }
+
+    // Envoi des struct entry, avec toutes les clefs valeurs au bon endroit
+    struct entry tab_recu[sum];
+    MPI_Alltoallv(tab, tailles, tailles, MPI_ENTRY_TYPE, tab_recu, taille_recue, taille_recue, MPI_ENTRY_TYPE, MPI_COMM_WORLD);
+
+    // Insertion de toutes les valeurs dans le dictionnaire au bon endroit
+    for (int i = 0; i < sum; i++) {
+        dict_insert(tab_recu[i].k, tab_recu[i].v);
     }
 
     double mid = wtime();

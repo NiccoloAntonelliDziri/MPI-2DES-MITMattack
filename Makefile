@@ -29,7 +29,7 @@ $(TARGET_PAR): $(SRC_PATH)/mitm_paral.c
 
 $(TARGET_PAR2): $(SRC_PATH)/mitm_paral2.c
 	@echo Programme parallèle 2:
-	$(CC) $< $(CFLAGS) -o $@ $(CFLAGS)
+	$(CC) $< src/sorting.c $(CFLAGS) -o $@ $(CFLAGS)
 
 # phony rules
 .PHONY: makedir
@@ -46,7 +46,7 @@ seq: $(TARGET_IT)
 par: $(TARGET_PAR)
 
 .PHONY: par2
-par: $(TARGET_PAR2)
+par2: $(TARGET_PAR2)
 
 .PHONY: clean
 clean:
