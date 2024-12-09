@@ -9,9 +9,7 @@
 #include <err.h>
 #include <assert.h>
 
-typedef uint64_t u64;       /* portable 64-bit integer */
-typedef uint32_t u32;       /* portable 32-bit integer */
-struct __attribute__ ((packed)) entry { u32 k; u64 v; };  /* hash table entry */
+#include "utils.h"
 
 /***************************** global variables ******************************/
 
@@ -25,9 +23,6 @@ struct entry *A;   /* the hash table */
 u32 P[2][2] = {{0, 0}, {0xffffffff, 0xffffffff}};
 u32 C[2][2];
 
-int world_size;
-int world_rank;
-int root;
 /************************ tools and utility functions *************************/
 
 double wtime()
@@ -121,7 +116,8 @@ static const u64 PRIME = 0xfffffffb;
 /* allocate a hash table with `size` slots (12*size bytes) */
 void dict_setup(u64 size)
 {
-	dict_size = size;
+	dict_size = size / world_size + 1;
+
 	char hdsize[8];
 	human_format(dict_size * sizeof(*A), hdsize);
 	printf("Dictionary size: %sB\n", hdsize);
@@ -222,9 +218,31 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
 {
     double start = wtime();
     u64 N = 1ull << n;
-    for (u64 x = 0; x < N; x++) {
+
+    u64 petit_N = N / world_size;
+    u64 reste = N % world_size;
+    
+    if(world_rank < reste) petit_N++;
+
+
+    int begin = world_rank * petit_N;
+    int end = (world_rank + 1) * petit_N;
+    if (world_rank >= reste) {
+        begin += reste;
+        end += reste;
+    }
+
+    // Alloue un tableau à trier
+    triplet *tab = (triplet*) malloc(sizeof(triplet) * petit_N);
+    unsigned indice = 0;
+
+    for (u64 x = begin; x < end; x++) {
         u64 z = f(x);
-        dict_insert(z, x);
+        // dict_insert(z, x);
+        tab[indice].key_value.k = z;
+        tab[indice].key_value.v = x;
+        tab[indice].process = z % world_size;
+        indice++;
     }
 
     double mid = wtime();
