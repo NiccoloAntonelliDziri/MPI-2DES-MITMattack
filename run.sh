@@ -17,8 +17,8 @@ make
 # Read file line by line and call ./src/mitm_paral2.cpp
 while IFS= read -r line
 do
-    # mpiexec -- ./bin/pr_golden2 $line
-    echo $line
+    mpiexec -- ./bin/pr_golden2 $line
+    # echo $line
 done < temp.txt
 
 # Remove temporary file
