@@ -18,6 +18,9 @@ void swap(clefvaleur *first, clefvaleur*second);
 // upper: upper index
 int partition(clefvaleur tab[], int lower, int upper);
 
-void quickSort(clefvaleur tab[], int lower, int upper);
+// void quickSort(clefvaleur tab[], int lower, int upper);
+
+
+void quickSort(clefvaleur arr[], int first_index, int last_index);
 
 #endif

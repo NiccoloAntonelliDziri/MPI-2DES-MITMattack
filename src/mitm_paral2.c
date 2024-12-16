@@ -248,19 +248,29 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
         tab[indice].v = x;
         indice++;
     }
+    // printf("indicefinal=%d\n",indice);
 
     // range le tableau selon le numéro de proccus auquel il faut l'aligner
+
+    printf("test1\n");
     quickSort(tab, 0, petit_N);
+    printf("test2\n");
 
     // Création du tableau de tailles à envoyer
     int tailles[world_size];
     int compteur = 0;
+    printf("petit_N%llu\n",petit_N);
     for (int i = 1; i < petit_N; i++) {
         compteur++;
         if (proc(tab[i - 1]) != proc(tab[i])) {
             tailles[proc(tab[i - 1])] = compteur;
             compteur = 0;
         }
+        // printf("taille[%d]=%d\n",proc(tab[i - 1]),tailles[proc(tab[i - 1])]);
+    }
+
+    for (int i=0;i<world_size;i++){
+        printf("taille[%d]=%d\n",i,tailles[i]);
     }
 
     // Taille recue depuis chaque processus
@@ -290,11 +300,15 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
     int displs[world_size];
     int displs_recue[world_size];
     for (int i = 0; i < world_size; i++) {
+        // displs[i] = sum;
+        // printf("displs[%d]=%d\n",i,displs[i]);
+        // displs_recue[i] = sum_recu;
         sum += tailles[i];
+        // printf("taille[%d]=%d\n",i,tailles[i]);
         sum_recu += taille_recue[i - 1];
-        displs[i] = sum;
-        displs_recue[i] = sum_recu;
+        
     }
+  
 
     // Envoi des struct clefvaleur, avec toutes les clefs valeurs au bon endroit
     clefvaleur tab_recu[sum];
@@ -309,24 +323,24 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
     printf("Fill: %.1fs\n", mid - start);
     
     int nres = 0;
-    u64 ncandidates = 0;
-    u64 x[256];
-    for (u64 z = 0; z < N; z++) {
-        u64 y = g(z);
-        int nx = dict_probe(y, 256, x);
-        assert(nx >= 0);
-        ncandidates += nx;
-        for (int i = 0; i < nx; i++)
-            if (is_good_pair(x[i], z)) {
-            	if (nres == maxres)
-            		return -1;
-            	k1[nres] = x[i];
-            	k2[nres] = z;
-            	printf("SOLUTION FOUND!\n");
-            	nres += 1;
-            }
-    }
-    printf("Probe: %.1fs. %" PRId64 " candidate pairs tested\n", wtime() - mid, ncandidates);
+    // u64 ncandidates = 0;
+    // u64 x[256];
+    // for (u64 z = 0; z < N; z++) {
+    //     u64 y = g(z);
+    //     int nx = dict_probe(y, 256, x);
+    //     assert(nx >= 0);
+    //     ncandidates += nx;
+    //     for (int i = 0; i < nx; i++)
+    //         if (is_good_pair(x[i], z)) {
+    //         	if (nres == maxres)
+    //         		return -1;
+    //         	k1[nres] = x[i];
+    //         	k2[nres] = z;
+    //         	printf("SOLUTION FOUND!\n");
+    //         	nres += 1;
+    //         }
+    // }
+    // printf("Probe: %.1fs. %" PRId64 " candidate pairs tested\n", wtime() - mid, ncandidates);
     return nres;
 }
 

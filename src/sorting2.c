@@ -13,42 +13,8 @@ int proc(clefvaleur e){
     return e.k % world_size;
 }
 
-void swap(clefvaleur *first, clefvaleur *second){
-    clefvaleur temp = *first;
-    *first = *second;
-    *second = temp;
-}
 
-int partition(clefvaleur tab[], int lower, int upper) {
-    int i = lower;
-    int pivot = proc(tab[lower]);
-    
-    for (int j = lower + 1; j < upper; j++) {
-        if (proc(tab[j]) < pivot) {
-            i++;
-        } 
-        if (j > i) {
-            swap(&tab[i], &tab[j]);
-        }
-    }
-    if (i > lower) {
-        swap(&tab[i], &tab[lower]);
-    }
-    return i;
-}
-
-// void quickSort(clefvaleur tab[], int lower, int upper){
-//     if (upper - 1 > lower) {
-//         int partitionIndex = partition(tab, lower, upper);
-
-//         quickSort(tab, lower, partitionIndex);
-//         quickSort(tab, partitionIndex + 1, upper);
-//     }
-// }
-
-
-
-void quickSort(clefvaleur arr[], int first_index, int last_index) {
+void quick_sort2(clefvaleur arr[], int first_index, int last_index) {
   // declaring index variables
   int pivotIndex, index_a, index_b;
   clefvaleur temp;
@@ -82,7 +48,7 @@ void quickSort(clefvaleur arr[], int first_index, int last_index) {
     arr[index_b] = temp;
 
     // Recursive call for quick sort, with partitioning
-    quickSort(arr, first_index, index_b - 1);
-    quickSort(arr, index_b + 1, last_index);
+    quick_sort(arr, first_index, index_b - 1);
+    quick_sort(arr, index_b + 1, last_index);
   }
 }
