@@ -237,11 +237,13 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
         end += reste;
     }
 
-    // printf("Petit_N = %lu, process = %d\n", petit_N, world_rank);
+    // printf("Petit_N = %llu, process = %d\n", petit_N, world_rank);
+    // printf("reste=%llu\n",reste);
 
     // Alloue un tableau à trier
     clefvaleur *tab = (clefvaleur*) malloc(sizeof(clefvaleur) * petit_N);
     int indice = 0;
+    
 
     // Calcul première boucle
     for (u64 x = begin; x < end; x++) {
@@ -261,6 +263,12 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
 
     // Création du tableau de tailles à envoyer
     int tailles[world_size];
+    int taille_recue[world_size];
+    for (int i=0;i<world_size;i++){
+        tailles[i]=0;
+        taille_recue[i]=0;
+    }
+    
     int compteur = 1;
     for (int i = 1; i < petit_N; i++) {
         if (proc(tab[i - 1]) != proc(tab[i])) {
@@ -276,7 +284,6 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
     }
 
     // Taille recue depuis chaque processus
-    int taille_recue[world_size];
     MPI_Alltoall(tailles, 1, MPI_INT , taille_recue, 1, MPI_INT, MPI_COMM_WORLD);
 
     // Creation d'un datatype pour le struct clefvaleur
@@ -292,24 +299,14 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
 
     // Calcul de la taille totale du tableau avec les tailles recues et du displs
 
-    // CETTE BOUCLE EST FAUSSE
-    // IL FAUT FAIRE LE displs
-    // displs[0] == 0
+
     // C'est le cumsum des tailles pour les strides
     // pareil pour l'autre displs
     int sum = 0;
     int sum_recu = 0;
     int displs[world_size];
     int displs_recue[world_size];
-    // for (int i = 0; i < world_size; i++) {
-    //     // displs[i] = sum;
-    //     // printf("displs[%d]=%d\n",i,displs[i]);
-    //     // displs_recue[i] = sum_recu;
-    //     sum += tailles[i];
-    //     // printf("taille[%d]=%d\n",i,tailles[i]);
-    //     sum_recu += taille_recue[i - 1];
-    //     
-    // }
+
     for (int i = 0; i < world_size; i++) {
         displs[i] = sum;
         displs_recue[i] = sum_recu;
@@ -317,12 +314,15 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
         sum_recu += taille_recue[i];
     }
   
-    for (int i = 0; i < world_size; i++) {
-        printf("process = %d, displs[%d]=%d\n",world_rank, i,displs[i]);
-        printf("process = %d, displs_recue[%d]=%d\n",world_rank, i,displs_recue[i]);
-        printf("process = %d, taille_recue[%d]=%d\n",world_rank, i,taille_recue[i]);
-        printf("process = %d, taille[%d]=%d\n",world_rank, i,tailles[i]);
-    }
+    // if (world_rank==root){
+    // for (int i = 0; i < world_size; i++) {
+    //         printf("process = %d, displs[%d]=%d\n",world_rank, i,displs[i]);
+    //         printf("process = %d, displs_recue[%d]=%d\n",world_rank, i,displs_recue[i]);
+    //         printf("process = %d, taille_recue[%d]=%d\n",world_rank, i,taille_recue[i]);
+    //         printf("process = %d, taille[%d]=%d\n",world_rank, i,tailles[i]);
+    //     }
+    // }
+   
 
     // Envoi des struct clefvaleur, avec toutes les clefs valeurs au bon endroit
     clefvaleur tab_recu[sum];
@@ -340,6 +340,11 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
     int nres = 0;
     u64 ncandidates = 0;
     u64 x[256];
+    // Faire un système Maitre esclave où le maitre fait la boucle for du prog séquentiel et calcule le g(z). Au début il en calcul des tableaux (autant qu'il y'a de processus) d'une 
+    // taille conséquente pour que chaque process ait suffisamment de travail avant d'en redemander au maitre et que le maitre ait le temps de calculer suffisamment de valeurs de g(z)
+    //Attention gérer le cas où le maître s'envoie à lui même des "g(z)" (càd proc(g(z))==root), il devra faire des calculs en même tps qu'il répartie le travail
+    //Soit on modifie le début en ne mettant pas de dictionnaire pour le root
+    //Soit le root calcule par intermittence ses propres paires (et en même temps répartie le travail)
     for (u64 z = 0; z < N; z++) {
         u64 y = g(z);
         int nx = dict_probe(y, 256, x);
