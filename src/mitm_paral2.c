@@ -158,8 +158,11 @@ void dict_insert(u64 key, u64 value)
  *  array must be preallocated of size (at least) `maxval`.
  *  The function returns -1 if there are more than `maxval` results.
  */
-int dict_probe(u64 key, int maxval, u64 values[])
+int dict_probe(u64 key, int maxval, u64 values[], u64 size)
 {
+    // printf("bonjour\n");
+    // dict_size=size;
+    // printf("proc%d dict_size=%llu\n",world_rank,dict_size);
     u32 k = key % PRIME;
     u64 h = murmur64(key) % dict_size;
     int nval = 0;
@@ -340,20 +343,28 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
    
 
     // Envoi des struct clefvaleur, avec toutes les clefs valeurs au bon endroit
-    clefvaleur tab_recu[sum_recu];
+    // clefvaleur tab_recu[sum_recu];
+    clefvaleur *tab_recu = (clefvaleur*) malloc(sizeof(clefvaleur) * sum_recu);
     MPI_Alltoallv(tab, tailles, displs, MPI_CLEFVALEUR_TYPE, tab_recu, taille_recue, displs_recue, MPI_CLEFVALEUR_TYPE, MPI_COMM_WORLD);
 
 
     // Insertion de toutes les valeurs dans le dictionnaire au bon endroit
-    // printf("wr=%d,sum_recu=%d\n",world_rank,sum_recu);
-    dict_setup(sum_recu);
+    // printf("wr=%d,1.25*sum_recu=%d\n",world_rank,(int)(1.25*sum_recu));
+
+
+    //LE 1.5* est nécessaire pour des n petits, sinon utiliser 1.125
+    dict_setup(1.5*sum_recu);
+    // dict_setup( 1.5*N / world_size);
+    // dict_setup(1.125*N);
+    // dict_setup(11);
     //sum remplacée par sum_recu ça fait une boucle infinie
     for (int i = 0; i < sum_recu; i++) {
         // printf("wr=%d, %d cle:%llu  val:%llu\n",world_rank,i,tab_recu[i].k, tab_recu[i].v);
         
         dict_insert(tab_recu[i].k, tab_recu[i].v);
     }
-    free(tab);
+    // free(tab);
+    free(tab_recu);
 
     double mid = wtime();
     printf("Fill: %.1fs\n", mid - start);
@@ -370,12 +381,14 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
     //\\ATTENTION//\\ATTENTION//\\ATTENTION la manière dont on définie triger_work est arbitraire, il faudra faire des tests pour voir comment le définir de manière opti
     // u64 triger_work=(u64)(N/(world_size*world_size));
     //\\ATTENTION//\\ATTENTION//\\ATTENTION HARD CODE
-    u64 triger_work=5;
-    printf("triger_work=%llu\n",triger_work);
+    // u64 triger_work=5;
+    // printf("triger_work=%llu\n",triger_work);
     // u64 triger_work=(u64)(N/(world_size));
     // u64 triger_work=N;
 
-    tab = (clefvaleur*) malloc(sizeof(clefvaleur) * petit_N);
+    // printf("Petit_N = %llu, process = %d\n", petit_N, world_rank);
+    // tab = (clefvaleur*) malloc(sizeof(clefvaleur) * petit_N);
+    // clefvaleur *tab2 = (clefvaleur*) malloc(sizeof(clefvaleur) * petit_N);
     indice = 0;
     
 
@@ -424,30 +437,35 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
         sum_recu += taille_recue[i];
     }
 
+    tab_recu = (clefvaleur*) malloc(sizeof(clefvaleur) * sum_recu);
     MPI_Alltoallv(tab, tailles, displs, MPI_CLEFVALEUR_TYPE, tab_recu, taille_recue, displs_recue, MPI_CLEFVALEUR_TYPE, MPI_COMM_WORLD);
-    // printf("wr=%d,sum_recu=%d\n",world_rank,sum_recu);
+    free(tab);
+    //printf("wr=%d,sum_recu=%d\n",world_rank,sum_recu);
     //   for (int i = 0; i < sum_recu; i++) {
     //     printf("wr=%d, %d cle:%llu  val:%llu\n",world_rank,i,tab_recu[i].k, tab_recu[i].v);
     //   }
 
-     printf("%d TESTTESTTESTTESTTEST\n",world_rank);
-      for (int i = 0; i < sum_recu; i++) {
-        u64 y = tab_recu[i].k;
-        int nx = dict_probe(y, 256, x);
+    //  printf("%d TESTTESTTESTTESTTEST\n",world_rank);
+    //  while(1){}
+      for (int j = 0; j < sum_recu; j++) {
+        u64 im = tab_recu[j].k;
+        int nx = dict_probe(im, 256, x,11);
+        // printf("%d TESTTESTTESTTESTTEST\n",world_rank);
+        // while(1){}
         assert(nx >= 0);
         ncandidates += nx;
         for (int i = 0; i < nx; i++)
-            if (is_good_pair(x[i], tab_recu[i].v)) {
+            if (is_good_pair(x[i], tab_recu[j].v)) {
             	if (nres == maxres)
             		return -1;
             	k1[nres] = x[i];
-            	k2[nres] = tab_recu[i].v;
+            	k2[nres] = tab_recu[j].v;
             	printf("SOLUTION FOUND!\n");
             	nres += 1;
             }
 
     }
-    free(tab);
+    free(tab_recu);
 
 
 
