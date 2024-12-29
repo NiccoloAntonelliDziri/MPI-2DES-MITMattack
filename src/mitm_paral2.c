@@ -26,6 +26,8 @@ int world_size;
 int world_rank;
 int root;
 
+char *output_file_path;
+
 /************************ tools and utility functions *************************/
 
 double wtime() {
@@ -648,14 +650,44 @@ int main(int argc, char **argv) {
     /* search */
     u64 k1[16], k2[16];
     int nkey = golden_claw_search(16, k1, k2);
-    assert(nkey > 0);
+    printf("process: %d, nkey: %d\n", world_rank, nkey);
 
-    /* validation */
-    for (int i = 0; i < nkey; i++) {
-        assert(f(k1[i]) == g(k2[i]));
-        assert(is_good_pair(k1[i], k2[i]));
-        printf("Solution found: (%" PRIx64 ", %" PRIx64 ") [checked OK]\n",
-               k1[i], k2[i]);
+    // Récupération de toutes les collisions trouvées dans le processus root
+    int nkey_recu[world_size];
+    MPI_Gather(&nkey, 1, MPI_INT, nkey_recu, 1, MPI_INT, root, MPI_COMM_WORLD);
+
+    int nkeys_total = 0;
+    int displs[world_size];
+    for (int i = 0; i < world_size; i++) {
+        displs[i] = nkeys_total;
+        nkeys_total += nkey_recu[i];
+    }
+
+    u64 *k1_total;
+    u64 *k2_total;
+    if (world_rank == root) {
+        k1_total = (u64 *)malloc(nkeys_total * sizeof(u64));
+        k2_total = (u64 *)malloc(nkeys_total * sizeof(u64));
+    }
+
+    MPI_Gatherv(k1, nkey, MPI_UINT64_T, k1_total, nkey_recu, displs,
+                MPI_UINT64_T, root, MPI_COMM_WORLD);
+    MPI_Gatherv(k2, nkey, MPI_UINT64_T, k2_total, nkey_recu, displs,
+                MPI_UINT64_T, root, MPI_COMM_WORLD);
+
+    if (world_rank == root) {
+        assert(nkeys_total > 0);
+
+        /* validation */
+        for (int i = 0; i < nkey; i++) {
+            assert(f(k1[i]) == g(k2[i]));
+            assert(is_good_pair(k1[i], k2[i]));
+            printf("Solution found: (%" PRIx64 ", %" PRIx64 ") [checked OK]\n",
+                   k1[i], k2[i]);
+        }
+
+        free(k1_total);
+        free(k2_total);
     }
     MPI_Finalize();
 }
