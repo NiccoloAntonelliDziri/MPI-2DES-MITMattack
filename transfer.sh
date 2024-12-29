@@ -5,7 +5,7 @@
 # Usage function
 
 usage() {
-    echo "Usage: $0 <login> <place>"
+    echo "Usage: $0 [flags] <login> <place>"
     echo "Flags:"
     echo "  -h, --help: Display this help message"
     echo "  -c, --connect: Automatically connect to Grid5000"
