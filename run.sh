@@ -13,9 +13,12 @@ usage() {
     echo "Flags:"
     echo "  -h, --help: Display this help message"
     echo "  -f, --file: Specify the file containing the commands"
+    echo "           Default: commands.txt"
     echo "  -g, --grid: If set, the script will run on Grid5000"
+    echo "           Default: false"
     echo "  -c, --compile: If set, the script will compile the source code"
     echo "  -o, --output: Specify the output file"
+    echo "           Default: output.txt"
 }
 
 # Flags
