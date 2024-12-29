@@ -27,6 +27,8 @@ int world_rank;
 int root;
 
 char *output_file_path;
+FILE *output_file;
+FILE *results_file;
 
 /************************ tools and utility functions *************************/
 
@@ -349,7 +351,10 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
     // printf("wr=%d,1.25*sum_recu=%d\n",world_rank,(int)(1.25*sum_recu));
 
     // LE 1.5* est nécessaire pour des n petits, sinon utiliser 1.125
-    dict_setup(1.5 * sum_recu);
+    // dict_setup(1.5 * sum_recu);
+    // dict_setup(1.125 * sum_recu);
+    dict_setup(sum_recu + 1);
+    // printf("sum recu: %d\n", sum_recu);
     // dict_setup( 1.5*N / world_size);
     // dict_setup(1.125*N);
     // dict_setup(11);
@@ -466,6 +471,7 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
                 k1[nres] = x[i];
                 k2[nres] = tab_recu[j].v;
                 printf("SOLUTION FOUND!\n");
+                printf("Sol: %lu, %lu", x[i], tab_recu[j].v);
                 nres += 1;
             }
     }
@@ -594,6 +600,7 @@ void process_command_line_options(int argc, char **argv) {
                                  {"C0", required_argument, NULL, '0'},
                                  {"C1", required_argument, NULL, '1'},
                                  {NULL, 0, NULL, 0}};
+
     char ch;
     int set = 0;
     while ((ch = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
@@ -642,6 +649,13 @@ int main(int argc, char **argv) {
     if (world_rank == root) {
         printf("Running with n=%d, C0=(%08x, %08x) and C1=(%08x, %08x)\n",
                (int)n, C[0][0], C[0][1], C[1][0], C[1][1]);
+
+        results_file = fopen("results_file.txt", "a");
+        fprintf(results_file, "\n--------------------\n");
+        fprintf(results_file,
+                "Running with n=%d, C0=(%08x, %08x) and C1=(%08x, %08x)\n",
+                (int)n, C[0][0], C[0][1], C[1][0], C[1][1]);
+        fprintf(results_file, "Results:\n");
     }
 
     // printf("n: %lu; n_process:%lu\n", n, n_process);
@@ -650,7 +664,7 @@ int main(int argc, char **argv) {
     /* search */
     u64 k1[16], k2[16];
     int nkey = golden_claw_search(16, k1, k2);
-    printf("process: %d, nkey: %d\n", world_rank, nkey);
+    // printf("process: %d, nkey: %d\n", world_rank, nkey);
 
     // Récupération de toutes les collisions trouvées dans le processus root
     int nkey_recu[world_size];
@@ -679,11 +693,14 @@ int main(int argc, char **argv) {
         assert(nkeys_total > 0);
 
         /* validation */
-        for (int i = 0; i < nkey; i++) {
-            assert(f(k1[i]) == g(k2[i]));
-            assert(is_good_pair(k1[i], k2[i]));
+        for (int i = 0; i < nkeys_total; i++) {
+            assert(f(k1_total[i]) == g(k2_total[i]));
+            assert(is_good_pair(k1_total[i], k2_total[i]));
             printf("Solution found: (%" PRIx64 ", %" PRIx64 ") [checked OK]\n",
-                   k1[i], k2[i]);
+                   k1_total[i], k2_total[i]);
+            fprintf(results_file,
+                    "Solution found: (%" PRIx64 ", %" PRIx64 ")\n", k1_total[i],
+                    k2_total[i]);
         }
 
         free(k1_total);

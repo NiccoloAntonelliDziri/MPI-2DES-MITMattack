@@ -1,0 +1,31 @@
+
+--------------------
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+
+--------------------
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+--------------------
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+
+--------------------
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+--------------------
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+
+--------------------
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+
+--------------------
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)

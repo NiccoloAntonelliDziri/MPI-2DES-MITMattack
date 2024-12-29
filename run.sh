@@ -64,13 +64,17 @@ NODES=$1
 # Remove empty lines
 sed -e '/^$/d' $COMMANDS > temp.txt
 
+# number if lines in file
+nb_lines=$(wc -l < temp.txt)
+
 if [ "$ONGRID5000" = false ]; then
     # Read file line by line and call ./src/mitm_paral2.cpp
-    while IFS= read -r line
+    for i in $(seq 1 $nb_lines);
     do
+        line=$(sed -n "$i"p temp.txt)
         mpiexec --n $1 -- ./bin/pr_golden2 $line
         # echo $line
-    done < temp.txt
+    done
 else
     # Check if resources are available
     # if $OAR_NODEFILE is empty no resources are available
@@ -80,11 +84,11 @@ else
     fi
 
     # Read file line by line and call ./src/mitm_paral2.cpp
-    while IFS= read -r line
+    for i in $(seq 1 $nb_lines);
     do
-        # oarsub -I -l nodes=$NODES,walltime=2:00:00 "./bin/pr_golden2 $line"
+        line=$(sed -n "$i"p temp.txt)
         mpiexec --n $NODES --hostfile $OAR_NODEFILE -- ./bin/pr_golden2 $line
-    done < temp.txt
+    done
 fi
 
 # Remove temporary file
