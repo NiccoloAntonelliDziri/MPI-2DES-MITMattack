@@ -41,6 +41,10 @@ fi
 login=$1
 place=$2
 
+# Create remote directories if they don't exist
+
+ssh $place.g5k "mkdir -p MITM/src"
+
 scp -r src/ $login@access.grid5000.fr:$place/MITM/
 scp run.sh $login@access.grid5000.fr:$place/MITM/
 scp Makefile $login@access.grid5000.fr:$place/MITM/
