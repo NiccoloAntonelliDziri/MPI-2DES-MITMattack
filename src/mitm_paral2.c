@@ -158,7 +158,7 @@ void dict_insert(u64 key, u64 value)
  *  array must be preallocated of size (at least) `maxval`.
  *  The function returns -1 if there are more than `maxval` results.
  */
-int dict_probe(u64 key, int maxval, u64 values[], u64 size)
+int dict_probe(u64 key, int maxval, u64 values[])
 {
     // printf("bonjour\n");
     // dict_size=size;
@@ -449,7 +449,7 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[])
     //  while(1){}
       for (int j = 0; j < sum_recu; j++) {
         u64 im = tab_recu[j].k;
-        int nx = dict_probe(im, 256, x,11);
+        int nx = dict_probe(im, 256, x);
         // printf("%d TESTTESTTESTTESTTEST\n",world_rank);
         // while(1){}
         assert(nx >= 0);
