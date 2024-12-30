@@ -232,6 +232,17 @@ int proc(clefvaleur c) { return c.k % world_size; }
 
 /* search the "golden collision" */
 int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
+    // Creation d'un datatype pour le struct clefvaleur
+    const int nitems = 2;
+    int blocklenght[2] = {1, 1};
+    MPI_Datatype types[2] = {MPI_UINT64_T, MPI_UINT64_T};
+    MPI_Datatype MPI_CLEFVALEUR_TYPE;
+    MPI_Aint offsets[2];
+    offsets[0] = offsetof(clefvaleur, k);
+    offsets[1] = offsetof(clefvaleur, v);
+    MPI_Type_create_struct(nitems, blocklenght, offsets, types,
+                           &MPI_CLEFVALEUR_TYPE);
+    MPI_Type_commit(&MPI_CLEFVALEUR_TYPE);
 
     double time_start = wtime();
 
@@ -249,10 +260,6 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
         begin += reste;
         end += reste;
     }
-
-    // printf("Petit_N = %llu, process = %d\n", petit_N, world_rank);
-    // printf("reste=%llu\n",reste);
-
     // Alloue un tableau à trier
     clefvaleur *tab = (clefvaleur *)malloc(sizeof(clefvaleur) * petit_N);
     int indice = 0;
@@ -264,27 +271,11 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
         tab[indice].v = x;
         indice++;
     }
-    // printf("Process: %d, begin = %d, end = %d\n", world_rank, begin, end);
-    // printf("indicefinal=%d\n",indice);
-    // printf("delta=%llu\n",end-begin);
-
-    // range le tableau selon le numéro de proccus auquel il faut l'aligner
-    // for (int i = 0; i < petit_N; i++) {
-    //     printf("process: %d, tab[%d].k=%llu, tab[%d].v=%llu\n", world_rank,
-    //     i, tab[i].k,i,tab[i].v);
-    // }
-    // quickSort(tab, 0, petit_N);
-
     double time_before_qsort1 = wtime();
 
     qsort(tab, petit_N, sizeof(clefvaleur), compar);
 
     double time_after_qsort1 = wtime();
-
-    // for (int i = 0; i < petit_N; i++) {
-    //     printf("process: %d, tab[%d].k=%llu, tab[%d].v=%llu\n", world_rank,
-    //     i, tab[i].k%world_size,i,tab[i].v);
-    // }
 
     // Création du tableau de tailles à envoyer
     int tailles[world_size];
@@ -303,28 +294,12 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
         compteur++;
     }
     tailles[proc(tab[petit_N - 1])] = compteur;
-    // for (int i=0;i<world_size;i++){
-    //     printf("taille[%d]=%d\n",i,tailles[i]);
-    // }
 
     // Taille recue depuis chaque processus
     MPI_Alltoall(tailles, 1, MPI_INT, taille_recue, 1, MPI_INT, MPI_COMM_WORLD);
 
-    // Creation d'un datatype pour le struct clefvaleur
-    const int nitems = 2;
-    int blocklenght[2] = {1, 1};
-    MPI_Datatype types[2] = {MPI_UINT64_T, MPI_UINT64_T};
-    MPI_Datatype MPI_CLEFVALEUR_TYPE;
-    MPI_Aint offsets[2];
-    offsets[0] = offsetof(clefvaleur, k);
-    offsets[1] = offsetof(clefvaleur, v);
-    MPI_Type_create_struct(nitems, blocklenght, offsets, types,
-                           &MPI_CLEFVALEUR_TYPE);
-    MPI_Type_commit(&MPI_CLEFVALEUR_TYPE);
-
     // Calcul de la taille totale du tableau avec les tailles recues et du
     // displs
-
     // C'est le cumsum des tailles pour les strides
     // pareil pour l'autre displs
     int sum = 0;
@@ -339,279 +314,277 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
         sum_recu += taille_recue[i];
     }
 
-    // if (world_rank==root){
-    // for (int i = 0; i < world_size; i++) {
-    //         printf("process = %d, displs[%d]=%d\n",world_rank, i,displs[i]);
-    //         printf("process = %d, displs_recue[%d]=%d\n",world_rank,
-    //         i,displs_recue[i]); printf("process = %d,
-    //         taille_recue[%d]=%d\n",world_rank, i,taille_recue[i]);
-    //         printf("process = %d, taille[%d]=%d\n",world_rank, i,tailles[i]);
-    //     }
-    // }
-
     // Envoi des struct clefvaleur, avec toutes les clefs valeurs au bon endroit
     // clefvaleur tab_recu[sum_recu];
     clefvaleur *tab_recu = (clefvaleur *)malloc(sizeof(clefvaleur) * sum_recu);
     MPI_Alltoallv(tab, tailles, displs, MPI_CLEFVALEUR_TYPE, tab_recu,
                   taille_recue, displs_recue, MPI_CLEFVALEUR_TYPE,
                   MPI_COMM_WORLD);
+    free(tab);
 
     // Insertion de toutes les valeurs dans le dictionnaire au bon endroit
-    // printf("wr=%d,1.25*sum_recu=%d\n",world_rank,(int)(1.25*sum_recu));
-
-    // LE 1.5* est nécessaire pour des n petits, sinon utiliser 1.125
-    // dict_setup(1.5 * sum_recu);
-    // dict_setup(1.125 * sum_recu);
     dict_setup(sum_recu + 1);
-    // printf("sum recu: %d\n", sum_recu);
-    // dict_setup( 1.5*N / world_size);
-    // dict_setup(1.125*N);
-    // dict_setup(11);
+
     // sum remplacée par sum_recu ça fait une boucle infinie
     for (int i = 0; i < sum_recu; i++) {
-        // printf("wr=%d, %d cle:%llu  val:%llu\n",world_rank,i,tab_recu[i].k,
-        // tab_recu[i].v);
-
         dict_insert(tab_recu[i].k, tab_recu[i].v);
     }
     // free(tab);
     free(tab_recu);
 
+    // parellisation de la deuxième boucle
     double time_mid = wtime();
-    // printf("Fill: %.1fs\n", mid - start);
+
+    // Chaque processus calcule les valeurs de z pour les x qui lui sont
+    // attribués Chaque processus envoie ensuite la valeur au processus qui a le
+    // bon dictionnaire pour tester si il y a une collision
+    // Utilisation de MPI_Send, MPI_Irecv, MPI_Test pour savoir si on a reçu
+
+    // Fonctionnement du programme:
+    // Chaque processus calcule les valeurs de z pour les x qui lui sont
+    // Boucle sur les z
+    // Envoi des z au processus qui a le bon dictionnaires
+    // Test des collisions
 
     int nres = 0;
     u64 ncandidates = 0;
     u64 x[256];
-    // Faire un système Maitre esclave où le maitre fait la boucle for du prog
-    // séquentiel et calcule le g(z). Au début il en calcul des tableaux (autant
-    // qu'il y'a de processus) d'une taille conséquente pour que chaque process
-    // ait suffisamment de travail avant d'en redemander au maitre et que le
-    // maitre ait le temps de calculer suffisamment de valeurs de g(z)
-    // Attention gérer le cas où le maître s'envoie à lui même des "g(z)" (càd
-    // proc(g(z))==root), il devra faire des calculs en même tps qu'il répartie
-    // le travail Soit on modifie le début en ne mettant pas de dictionnaire
-    // pour le root Soit le root calcule par intermittence ses propres paires
-    // (et en même temps répartie le travail)
 
-    //\\ATTENTION//\\ATTENTION//\\ATTENTION la manière dont on définie
-    // triger_work est arbitraire, il faudra faire des tests pour voir comment
-    // le définir de manière opti
-    // u64 triger_work=(u64)(N/(world_size*world_size));
-    //\\ATTENTION//\\ATTENTION//\\ATTENTION HARD CODE
-    // u64 triger_work=5;
-    // printf("triger_work=%llu\n",triger_work);
-    // u64 triger_work=(u64)(N/(world_size));
-    // u64 triger_work=N;
+    // Block size
+    int size_block = 256;
+    int nblock = petit_N / size_block;
+    int reste_block = petit_N % size_block;
 
-    // printf("Petit_N = %llu, process = %d\n", petit_N, world_rank);
-    // tab = (clefvaleur*) malloc(sizeof(clefvaleur) * petit_N);
-    // clefvaleur *tab2 = (clefvaleur*) malloc(sizeof(clefvaleur) * petit_N);
-    indice = 0;
+    // Buffers for sending and receiving
+    clefvaleur *send_buffer =
+        (clefvaleur *)malloc(sizeof(clefvaleur) * size_block);
+    clefvaleur *receive_buffer = NULL;
 
-    // Calcul première boucle
-    for (u64 z = begin; z < end; z++) {
-        u64 y = g(z);
-        tab[indice].k = y;
-        tab[indice].v = z;
-        indice++;
-    }
-    // for (int i = 0; i < petit_N; i++) {
-    //     printf("process: %d, tab[%d].k=%llu, tab[%d].v=%llu\n", world_rank,
-    //     i, tab[i].k,i,tab[i].v);
-    // }
+    // Arrays for sizes and displacements
+    int taille_send[world_size];
+    int taille_recu[world_size];
+    int displs_send[world_size];
+    int displs_recu[world_size];
 
-    double time_before_qsort2 = wtime();
-
-    qsort(tab, petit_N, sizeof(clefvaleur), compar);
-    //    for (int i = 0; i < petit_N; i++) {
-    //     printf("process: %d, tab[%d].k=%llu, tab[%d].v=%llu\n", world_rank,
-    //     i, tab[i].k%world_size,i,tab[i].v);
-    // }
-
-    double time_after_qsort2 = wtime();
-
+    // Initialize sizes and displacements
     for (int i = 0; i < world_size; i++) {
-        tailles[i] = 0;
-        taille_recue[i] = 0;
+        taille_send[i] = 0;
+        taille_recu[i] = 0;
+        displs_send[i] = 0;
+        displs_recu[i] = 0;
     }
 
-    compteur = 1;
-    for (int i = 1; i < petit_N; i++) {
-        if (proc(tab[i - 1]) != proc(tab[i])) {
-            tailles[proc(tab[i - 1])] = compteur;
-            compteur = 0;
+    // Arrays for MPI requests
+    MPI_Request *send_requests =
+        (MPI_Request *)malloc(world_size * sizeof(MPI_Request));
+    MPI_Request *recv_requests =
+        (MPI_Request *)malloc(world_size * sizeof(MPI_Request));
+
+    // Initialize requests
+    for (int i = 0; i < world_size; i++) {
+        send_requests[i] = MPI_REQUEST_NULL;
+        recv_requests[i] = MPI_REQUEST_NULL;
+    }
+
+    // Process each block
+    for (int i = 0; i < nblock; i++) {
+        // Fill send buffer with y = g(z) and z values
+        for (int j = 0; j < size_block; j++) {
+            u64 z = i * size_block + j;
+            u64 y = g(z);
+            send_buffer[j].k = y;
+            send_buffer[j].v = z;
+            taille_send[y % world_size]++;
         }
-        compteur++;
-    }
-    tailles[proc(tab[petit_N - 1])] = compteur;
 
-    MPI_Alltoall(tailles, 1, MPI_INT, taille_recue, 1, MPI_INT, MPI_COMM_WORLD);
-    sum = 0;
-    sum_recu = 0;
+        // Sort send buffer by target process
+        qsort(send_buffer, size_block, sizeof(clefvaleur), compar);
 
-    for (int i = 0; i < world_size; i++) {
-        displs[i] = sum;
-        displs_recue[i] = sum_recu;
-        sum += tailles[i];
-        sum_recu += taille_recue[i];
-    }
+        // Exchange sizes with all processes
+        MPI_Alltoall(taille_send, 1, MPI_INT, taille_recu, 1, MPI_INT,
+                     MPI_COMM_WORLD);
 
-    tab_recu = (clefvaleur *)malloc(sizeof(clefvaleur) * sum_recu);
-    MPI_Alltoallv(tab, tailles, displs, MPI_CLEFVALEUR_TYPE, tab_recu,
-                  taille_recue, displs_recue, MPI_CLEFVALEUR_TYPE,
-                  MPI_COMM_WORLD);
-    free(tab);
-    // printf("wr=%d,sum_recu=%d\n",world_rank,sum_recu);
-    //    for (int i = 0; i < sum_recu; i++) {
-    //      printf("wr=%d, %d cle:%llu  val:%llu\n",world_rank,i,tab_recu[i].k,
-    //      tab_recu[i].v);
-    //    }
+        // Calculate displacements for sending and receiving
+        for (int j = 1; j < world_size; j++) {
+            displs_send[j] = displs_send[j - 1] + taille_send[j - 1];
+            displs_recu[j] = displs_recu[j - 1] + taille_recu[j - 1];
+        }
 
-    double time_before_probe = wtime();
+        // Allocate receive buffer based on the total number of elements to
+        // receive
+        int total_recv =
+            displs_recu[world_size - 1] + taille_recu[world_size - 1];
+        receive_buffer = (clefvaleur *)realloc(receive_buffer,
+                                               sizeof(clefvaleur) * total_recv);
 
-    //  printf("%d TESTTESTTESTTESTTEST\n",world_rank);
-    //  while(1){}
-    for (int j = 0; j < sum_recu; j++) {
-        u64 im = tab_recu[j].k;
-        int nx = dict_probe(im, 256, x);
-        // printf("%d TESTTESTTESTTESTTEST\n",world_rank);
-        // while(1){}
-        assert(nx >= 0);
-        ncandidates += nx;
-        for (int i = 0; i < nx; i++)
-            if (is_good_pair(x[i], tab_recu[j].v)) {
-                if (nres == maxres)
-                    return -1;
-                k1[nres] = x[i];
-                k2[nres] = tab_recu[j].v;
-                printf("SOLUTION FOUND!\n");
-                printf("Sol: %lu, %lu", x[i], tab_recu[j].v);
-                nres += 1;
+        // Post non-blocking receives
+        for (int j = 0; j < world_size; j++) {
+            if (taille_recu[j] > 0) {
+                MPI_Irecv(&receive_buffer[displs_recu[j]], taille_recu[j],
+                          MPI_CLEFVALEUR_TYPE, j, 0, MPI_COMM_WORLD,
+                          &recv_requests[j]);
             }
+        }
+
+        // Post non-blocking sends
+        for (int j = 0; j < world_size; j++) {
+            if (taille_send[j] > 0) {
+                MPI_Isend(&send_buffer[displs_send[j]], taille_send[j],
+                          MPI_CLEFVALEUR_TYPE, j, 0, MPI_COMM_WORLD,
+                          &send_requests[j]);
+            }
+        }
+
+        // Probe dictionary and check for collisions while waiting for
+        // communication
+        int completed_recv = 0;
+        int index = 0;
+        while (index < world_size) {
+            int flag;
+            MPI_Testany(world_size, recv_requests, &completed_recv, &flag,
+                        MPI_STATUS_IGNORE);
+            if (flag) {
+                index++;
+                // Process received data
+                for (int j = 0; j < taille_recu[completed_recv]; j++) {
+                    u64 y = receive_buffer[displs_recu[completed_recv] + j].k;
+                    u64 z = receive_buffer[displs_recu[completed_recv] + j].v;
+                    int nx = dict_probe(y, 256, x);
+                    assert(nx >= 0);
+                    ncandidates += nx;
+                    for (int k = 0; k < nx; k++) {
+                        if (is_good_pair(x[k], z)) {
+                            if (nres == maxres) {
+                                free(send_buffer);
+                                free(receive_buffer);
+                                free(send_requests);
+                                free(recv_requests);
+                                return -1;
+                            }
+                            k1[nres] = x[k];
+                            k2[nres] = z;
+                            printf("SOLUTION FOUND!\n");
+                            nres++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Wait for all sends to complete
+        MPI_Waitall(world_size, send_requests, MPI_STATUSES_IGNORE);
+
+        // Reset sizes for the next block
+        for (int j = 0; j < world_size; j++) {
+            taille_send[j] = 0;
+            taille_recu[j] = 0;
+        }
     }
-    free(tab_recu);
+
+    // Process the remaining block (if any)
+    if (reste_block > 0) {
+        // Fill send buffer with y = g(z) and z values
+        for (int j = 0; j < reste_block; j++) {
+            u64 z = nblock * size_block + j;
+            u64 y = g(z);
+            send_buffer[j].k = y;
+            send_buffer[j].v = z;
+            taille_send[y % world_size]++;
+        }
+
+        // Sort send buffer by target process
+        qsort(send_buffer, reste_block, sizeof(clefvaleur), compar);
+
+        // Exchange sizes with all processes
+        MPI_Alltoall(taille_send, 1, MPI_INT, taille_recu, 1, MPI_INT,
+                     MPI_COMM_WORLD);
+
+        // Calculate displacements for sending and receiving
+        for (int j = 1; j < world_size; j++) {
+            displs_send[j] = displs_send[j - 1] + taille_send[j - 1];
+            displs_recu[j] = displs_recu[j - 1] + taille_recu[j - 1];
+        }
+
+        // Allocate receive buffer based on the total number of elements to
+        // receive
+        int total_recv =
+            displs_recu[world_size - 1] + taille_recu[world_size - 1];
+        receive_buffer = (clefvaleur *)realloc(receive_buffer,
+                                               sizeof(clefvaleur) * total_recv);
+
+        // Post non-blocking receives
+        for (int j = 0; j < world_size; j++) {
+            if (taille_recu[j] > 0) {
+                MPI_Irecv(&receive_buffer[displs_recu[j]], taille_recu[j],
+                          MPI_CLEFVALEUR_TYPE, j, 0, MPI_COMM_WORLD,
+                          &recv_requests[j]);
+            }
+        }
+
+        // Post non-blocking sends
+        for (int j = 0; j < world_size; j++) {
+            if (taille_send[j] > 0) {
+                MPI_Isend(&send_buffer[displs_send[j]], taille_send[j],
+                          MPI_CLEFVALEUR_TYPE, j, 0, MPI_COMM_WORLD,
+                          &send_requests[j]);
+            }
+        }
+
+        // Probe dictionary and check for collisions while waiting for
+        // communication
+        int completed_recv = 0;
+        while (completed_recv < world_size) {
+            int flag;
+            MPI_Testany(world_size, recv_requests, &completed_recv, &flag,
+                        MPI_STATUS_IGNORE);
+            if (flag) {
+                // Process received data
+                for (int j = 0; j < taille_recu[completed_recv]; j++) {
+                    u64 y = receive_buffer[displs_recu[completed_recv] + j].k;
+                    u64 z = receive_buffer[displs_recu[completed_recv] + j].v;
+                    int nx = dict_probe(y, 256, x);
+                    assert(nx >= 0);
+                    ncandidates += nx;
+                    for (int k = 0; k < nx; k++) {
+                        if (is_good_pair(x[k], z)) {
+                            if (nres == maxres) {
+                                free(send_buffer);
+                                free(receive_buffer);
+                                free(send_requests);
+                                free(recv_requests);
+                                return -1;
+                            }
+                            k1[nres] = x[k];
+                            k2[nres] = z;
+                            nres++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Wait for all sends to complete
+        MPI_Waitall(world_size, send_requests, MPI_STATUSES_IGNORE);
+    }
 
     double time_end = wtime();
 
-    // Moyenne de taille des dictionnaires + min + max
-
-    // Write data into the output file as csv
-    // Only data from the root process is written
     if (world_rank == root) {
         char hdsize[8];
         human_format(dict_size * sizeof(*A), hdsize);
-        fprintf(output_file,
-                "%d, %lu, %s, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n",
+        fprintf(results_file, "%d, %lu, %s, %.4f, %.4f, %.4f, %.4f, %.4f\n",
                 world_size, n, hdsize, time_before_qsort1 - time_start,
                 time_after_qsort1 - time_before_qsort1,
-                time_mid - time_after_qsort1, time_before_qsort2 - time_mid,
-                time_after_qsort2 - time_before_qsort2,
-                time_end - time_before_probe, time_end - time_start);
+                time_mid - time_after_qsort1, time_end - time_mid,
+                time_end - time_start);
     }
 
-    // if (world_rank==root){
-    //     clefvaleur ** tabSend = (clefvaleur**) malloc(sizeof(clefvaleur*) *
-    //     world_size); for (int i=0;i<world_size;i++){
-    //         //\\ATTENTION//\\ATTENTION//\\ATTENTION la valeur 5000 est
-    //         arbitrairement fixée mais elle pourrait être trop faible
-    //         //Changer 5000 avec int(1.25*(size / world_size)) + 1;
-    //         //Tester avec 0.80*triger_work
-    //         tabSend[i]=(clefvaleur*) malloc(sizeof(clefvaleur) *
-    //         triger_work); tabSend[i][0].k=1;
-    //     }
+    // Free buffers
+    free(send_buffer);
+    free(receive_buffer);
+    free(send_requests);
+    free(recv_requests);
 
-    //     for (u64 z = 0; z < triger_work; z++) {
-    //     u64 y = g(z);
-    //     int process_assoc=(int)(y%world_size);
-    //     tabSend[process_assoc][tabSend[process_assoc][0].k].k=y;
-    //     tabSend[process_assoc][tabSend[process_assoc][0].k].v=z;
-    //     tabSend[process_assoc][0].k+=1;
-    //     }
-    //     // for (int i=0;i<world_size;i++){
-    //     //     for (int j=0;j<30;j++){
-    //     //         printf("tab[%d][%d]=%llu\n",i,j,tabSend[i][j].k);
-    //     //     }
-
-    //     // }
-
-    //     for (int i=0;i<world_size;i++){
-    //         if (i!=root){
-    //             MPI_Send(&tabSend[i][0].k,1,MPI_UINT64_T,i,41,MPI_COMM_WORLD);
-    //             MPI_Send(tabSend[i],tabSend[i][0].k,MPI_CLEFVALEUR_TYPE,i,42,MPI_COMM_WORLD);
-    //             tabSend[i][0].k=0;
-    //         }else{
-
-    //         }
-
-    //     }
-    //     for (int k=1;k<tabSend[root][0].k;k++){
-    //         // printf("proc %d
-    //         tab2[%d]=%llu\n",world_rank,k,tabSend[root][k].k); u64 y =
-    //         tabSend[root][k].k; u64 z=tabSend[root][k].v; int nx =
-    //         dict_probe(y, 256, x); assert(nx >= 0); ncandidates += nx; for
-    //         (int i = 0; i < nx; i++)
-    //             if (is_good_pair(x[i], z)) {
-    //                 if (nres == maxres)
-    //                     return -1;
-    //                 k1[nres] = x[i];
-    //                 k2[nres] = z;
-    //                 printf("SOLUTION FOUND!\n");
-    //                 nres += 1;
-    //             }
-
-    //     }
-
-    // }else{
-    //     // printf("proc num %d\n",world_rank);
-    //     MPI_Status status;
-    //     u64 tab2_size;
-    //     MPI_Recv(&tab2_size,1,MPI_UINT64_T,root,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
-    //     clefvaleur* tab_recu2=( clefvaleur*
-    //     )(malloc(sizeof(clefvaleur)*tab2_size));
-    //     MPI_Recv(tab_recu2,tab2_size,MPI_CLEFVALEUR_TYPE,root,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
-    //     // printf("TESTTESTTESTTESTTEST\n");
-
-    //     for (int k=1;k<tab2_size;k++){
-    //         // printf("proc %d tab2[%d]=%llu\n",world_rank,k,tab_recu2[k].k);
-    //         u64 y = tab_recu2[k].k;
-    //         u64 z=tab_recu2[k].v;
-    //         int nx = dict_probe(y, 256, x);
-    //         assert(nx >= 0);
-    //         ncandidates += nx;
-    //         for (int i = 0; i < nx; i++)
-    //             if (is_good_pair(x[i], z)) {
-    //                 if (nres == maxres)
-    //                     return -1;
-    //                 k1[nres] = x[i];
-    //                 k2[nres] = z;
-    //                 printf("SOLUTION FOUND!\n");
-    //                 nres += 1;
-    //             }
-
-    //     }
-    // while(1){}
-    //}
-    // printf("wr=%d, TESTSTETSTSTSTE\n",world_rank);
-    // while(1){}
-
-    // for (u64 z = 0; z < N; z++) {
-    //     u64 y = g(z);
-    //     int nx = dict_probe(y, 256, x);
-    //     assert(nx >= 0);
-    //     ncandidates += nx;
-    //     for (int i = 0; i < nx; i++)
-    //         if (is_good_pair(x[i], z)) {
-    //         	if (nres == maxres)
-    //         		return -1;
-    //         	k1[nres] = x[i];
-    //         	k2[nres] = z;
-    //         	printf("SOLUTION FOUND!\n");
-    //         	nres += 1;
-    //         }
-    // }
-    printf("Probe: %.1fs. %" PRId64 " candidate pairs tested\n",
-           wtime() - time_mid, ncandidates);
     return nres;
 }
 
@@ -689,6 +662,18 @@ int main(int argc, char **argv) {
             exit(1);
         }
     }
+
+    // Creation d'un datatype pour le struct clefvaleur
+    const int nitems = 2;
+    int blocklenght[2] = {1, 1};
+    MPI_Datatype types[2] = {MPI_UINT64_T, MPI_UINT64_T};
+    MPI_Datatype MPI_CLEFVALEUR_TYPE;
+    MPI_Aint offsets[2];
+    offsets[0] = offsetof(clefvaleur, k);
+    offsets[1] = offsetof(clefvaleur, v);
+    MPI_Type_create_struct(nitems, blocklenght, offsets, types,
+                           &MPI_CLEFVALEUR_TYPE);
+    MPI_Type_commit(&MPI_CLEFVALEUR_TYPE);
 
     if (world_rank == root) {
         printf("Running with n=%d, C0=(%08x, %08x) and C1=(%08x, %08x)\n",

@@ -62,7 +62,7 @@ fi
 NODES=$1
 
 # Write the headers of the output File
-echo "world size, n, dict size, tb q1, ta q1, tmid, tb q2, ta q2, tend" > $OUTPUT
+echo "world size,n,dict size,tbq1,taq1,tm,te,ttot" > $OUTPUT
 
 # Remove empty lines
 sed -e '/^$/d' $COMMANDS > temp.txt
