@@ -4,7 +4,7 @@
 
 COMMANDS=commands.txt # default file containing the commands
 ONGRID5000=false # Set to true if running on Grid5000
-OUTPUT=output.txt # default output file
+OUTPUT=output.csv # default output file
 
 # Usage function
 
@@ -18,7 +18,7 @@ usage() {
     echo "           Default: false"
     echo "  -c, --compile: If set, the script will compile the source code"
     echo "  -o, --output: Specify the output file"
-    echo "           Default: output.txt"
+    echo "           Default: output.csv"
 }
 
 # Flags
@@ -61,6 +61,9 @@ if [ "$#" -ne 1 ]; then
 fi
 NODES=$1
 
+# Write the headers of the output File
+echo "world size, n, dict size, tb q1, ta q1, tmid, tb q2, ta q2, tend" > $OUTPUT
+
 # Remove empty lines
 sed -e '/^$/d' $COMMANDS > temp.txt
 
@@ -72,7 +75,7 @@ if [ "$ONGRID5000" = false ]; then
     for i in $(seq 1 $nb_lines);
     do
         line=$(sed -n "$i"p temp.txt)
-        mpiexec --n $1 -- ./bin/pr_golden2 $line
+        mpiexec --n $1 -- ./bin/pr_golden2 $line --o $OUTPUT
         # echo $line
     done
 else

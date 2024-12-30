@@ -6,7 +6,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
+#include <time.h>
 
 #include "utils.h"
 
@@ -26,7 +28,7 @@ int world_size;
 int world_rank;
 int root;
 
-char *output_file_path;
+char *output_file_path = "output.csv";
 FILE *output_file;
 FILE *results_file;
 
@@ -230,7 +232,9 @@ int proc(clefvaleur c) { return c.k % world_size; }
 
 /* search the "golden collision" */
 int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
-    double start = wtime();
+
+    double time_start = wtime();
+
     u64 N = 1ull << n;
 
     u64 petit_N = N / world_size;
@@ -270,7 +274,12 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
     //     i, tab[i].k,i,tab[i].v);
     // }
     // quickSort(tab, 0, petit_N);
+
+    double time_before_qsort1 = wtime();
+
     qsort(tab, petit_N, sizeof(clefvaleur), compar);
+
+    double time_after_qsort1 = wtime();
 
     // for (int i = 0; i < petit_N; i++) {
     //     printf("process: %d, tab[%d].k=%llu, tab[%d].v=%llu\n", world_rank,
@@ -368,8 +377,8 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
     // free(tab);
     free(tab_recu);
 
-    double mid = wtime();
-    printf("Fill: %.1fs\n", mid - start);
+    double time_mid = wtime();
+    // printf("Fill: %.1fs\n", mid - start);
 
     int nres = 0;
     u64 ncandidates = 0;
@@ -412,11 +421,15 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
     //     i, tab[i].k,i,tab[i].v);
     // }
 
+    double time_before_qsort2 = wtime();
+
     qsort(tab, petit_N, sizeof(clefvaleur), compar);
     //    for (int i = 0; i < petit_N; i++) {
     //     printf("process: %d, tab[%d].k=%llu, tab[%d].v=%llu\n", world_rank,
     //     i, tab[i].k%world_size,i,tab[i].v);
     // }
+
+    double time_after_qsort2 = wtime();
 
     for (int i = 0; i < world_size; i++) {
         tailles[i] = 0;
@@ -455,6 +468,8 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
     //      tab_recu[i].v);
     //    }
 
+    double time_before_probe = wtime();
+
     //  printf("%d TESTTESTTESTTESTTEST\n",world_rank);
     //  while(1){}
     for (int j = 0; j < sum_recu; j++) {
@@ -476,6 +491,22 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
             }
     }
     free(tab_recu);
+
+    double time_end = wtime();
+
+    // Write data into the output file as csv
+    // Only data from the root process is written
+    if (world_rank == root) {
+        char hdsize[8];
+        human_format(dict_size * sizeof(*A), hdsize);
+        fprintf(output_file,
+                "%d, %lu, %s, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n", world_size,
+                n, hdsize, time_before_qsort1 - time_start,
+                time_after_qsort1 - time_before_qsort1,
+                time_mid - time_after_qsort1, time_before_qsort2 - time_mid,
+                time_after_qsort2 - time_before_qsort2,
+                time_end - time_before_probe);
+    }
 
     // if (world_rank==root){
     //     clefvaleur ** tabSend = (clefvaleur**) malloc(sizeof(clefvaleur*) *
@@ -577,8 +608,8 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
     //         	nres += 1;
     //         }
     // }
-    printf("Probe: %.1fs. %" PRId64 " candidate pairs tested\n", wtime() - mid,
-           ncandidates);
+    printf("Probe: %.1fs. %" PRId64 " candidate pairs tested\n",
+           wtime() - time_mid, ncandidates);
     return nres;
 }
 
@@ -596,9 +627,10 @@ void usage(char **argv) {
 }
 
 void process_command_line_options(int argc, char **argv) {
-    struct option longopts[4] = {{"n", required_argument, NULL, 'n'},
+    struct option longopts[5] = {{"n", required_argument, NULL, 'n'},
                                  {"C0", required_argument, NULL, '0'},
                                  {"C1", required_argument, NULL, '1'},
+                                 {"o", required_argument, NULL, 'o'},
                                  {NULL, 0, NULL, 0}};
 
     char ch;
@@ -620,6 +652,9 @@ void process_command_line_options(int argc, char **argv) {
             u64 c1 = strtoull(optarg, NULL, 16);
             C[1][0] = c1 & 0xffffffff;
             C[1][1] = c1 >> 32;
+            break;
+        case 'o':
+            output_file_path = optarg;
             break;
         default:
             errx(1, "Unknown option\n");
@@ -645,13 +680,29 @@ int main(int argc, char **argv) {
     // ATTENTION si on demande qu'au process root de faire la ligne suivante, ça
     // bug car les autres process n'auront pas accès à f et g
     process_command_line_options(argc, argv);
+    if (world_rank == root) {
+        output_file = fopen(output_file_path, "a");
+        if (output_file == NULL) {
+            printf("Error opening file!\n");
+            exit(1);
+        }
+    }
 
     if (world_rank == root) {
         printf("Running with n=%d, C0=(%08x, %08x) and C1=(%08x, %08x)\n",
                (int)n, C[0][0], C[0][1], C[1][0], C[1][1]);
 
         results_file = fopen("results_file.txt", "a");
-        fprintf(results_file, "\n--------------------\n");
+        if (results_file == NULL) {
+            printf("Error opening file!\n");
+            exit(1);
+        }
+        time_t t = time(NULL);
+        struct tm tm = *localtime(&t);
+        fprintf(results_file, "\n%d-%02d-%02d %02d:%02d:%02d\n",
+                tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
+                tm.tm_min, tm.tm_sec);
+
         fprintf(results_file,
                 "Running with n=%d, C0=(%08x, %08x) and C1=(%08x, %08x)\n",
                 (int)n, C[0][0], C[0][1], C[1][0], C[1][1]);

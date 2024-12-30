@@ -1,31 +1,140 @@
 
---------------------
-Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
-Results:
-
---------------------
-Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
-Results:
-Solution found: (1c0, 4f67)
-
---------------------
-Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
-Results:
-
---------------------
-Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
-Results:
-Solution found: (1c0, 4f67)
-
---------------------
-Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
-Results:
-
---------------------
-Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
-Results:
-
---------------------
+2024-12-30 00:28:51
 Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
 Results:
 Solution found: (4bd3, c49)
+
+2024-12-30 00:28:54
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 00:31:28
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 00:31:31
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 00:33:44
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 00:33:47
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 00:33:50
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 00:33:53
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 00:34:07
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 00:34:09
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 00:34:14
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 00:34:17
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 00:37:15
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 00:37:18
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 00:37:43
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 00:37:46
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 00:42:52
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 00:42:55
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 00:44:26
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 00:44:28
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 00:55:03
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 00:55:05
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 00:55:31
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 00:55:34
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 01:06:07
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 01:06:10
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-30 01:06:39
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-30 01:06:41
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
