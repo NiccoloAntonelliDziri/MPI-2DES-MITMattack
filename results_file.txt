@@ -53,3 +53,18 @@ Solution found: (3e40, 6118)
 Running with n=15, C0=(f59f24fe, 396206bc) and C1=(a7e724f6, 974d0659)
 Results:
 Solution found: (3e40, 6118)
+
+2024-12-31 11:30:48
+Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+Results:
+Solution found: (4bd3, c49)
+
+2024-12-31 11:30:50
+Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+Results:
+Solution found: (1c0, 4f67)
+
+2024-12-31 11:30:52
+Running with n=5, C0=(4e84bb7d, fe1563ba) and C1=(5d20396a, b6c9f840)
+Results:
+Solution found: (6, 1f)

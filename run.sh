@@ -15,7 +15,6 @@ usage() {
     echo "  -f, --file: Specify the file containing the commands"
     echo "           Default: commands.txt"
     echo "  -g, --grid: If set, the script will run on Grid5000"
-    echo "           Default: false"
     echo "  -c, --compile: If set, the script will compile the source code"
     echo "  -o, --output: Specify the output file"
     echo "           Default: output.csv"
@@ -62,7 +61,7 @@ fi
 NODES=$1
 
 # Write the headers of the output File
-echo "world size,n,dict size,tbq1,taq1,tm,te,ttot" > $OUTPUT
+echo "world size,n,dict size,tbq1,taq1,tm,tbq2,taq2,te,tot" > $OUTPUT
 
 # Remove empty lines
 sed -e '/^$/d' $COMMANDS > temp.txt
@@ -75,7 +74,7 @@ if [ "$ONGRID5000" = false ]; then
     for i in $(seq 1 $nb_lines);
     do
         line=$(sed -n "$i"p temp.txt)
-        mpiexec --n $1 -- ./bin/pr_golden2 $line --o $OUTPUT
+        mpiexec --n $1 -- ./bin/pr_golden $line --o $OUTPUT
         # echo $line
     done
 else
@@ -90,7 +89,7 @@ else
     for i in $(seq 1 $nb_lines);
     do
         line=$(sed -n "$i"p temp.txt)
-        mpiexec --n $NODES --hostfile $OAR_NODEFILE -- ./bin/pr_golden2 $line
+        mpiexec --n $NODES --hostfile $OAR_NODEFILE -- ./bin/pr_golden $line
     done
 fi
 
