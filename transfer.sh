@@ -49,6 +49,7 @@ scp -r src/ $login@access.grid5000.fr:$place/MITM/
 scp run.sh $login@access.grid5000.fr:$place/MITM/
 scp Makefile $login@access.grid5000.fr:$place/MITM/
 scp commands.txt $login@access.grid5000.fr:$place/MITM/
+scp coeurs.txt $login@access.grid5000.fr:$place/MITM/
 
 # Connect to Grid5000 if the user has entered -c
 
