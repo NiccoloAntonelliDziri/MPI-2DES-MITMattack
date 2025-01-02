@@ -10,7 +10,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-/***************************** global variables ******************************/
+
 typedef uint64_t u64; /* portable 64-bit integer */
 typedef uint32_t u32; /* portable 32-bit integer */
 struct __attribute__((packed)) entry {
@@ -23,9 +23,7 @@ typedef struct {
     u64 v;
 } clefvaleur;
 
-extern int world_size;
-extern int world_rank;
-extern int root;
+/***************************** global variables ******************************/
 
 u64 n = 0; /* block size (in bits) */
 u64 mask;  /* this is 2**n - 1 */
@@ -139,9 +137,6 @@ static const u64 PRIME = 0xfffffffb;
 /* allocate a hash table with `size` slots (12*size bytes) */
 void dict_setup(u64 size) {
     dict_size = size;
-    // dict_size = size / world_size + 1;
-    // dict_size = int(1.25*(size / world_size)) + 1;
-
     char hdsize[8];
     human_format(dict_size * sizeof(*A), hdsize);
     printf("Dictionary size: %sB\n", hdsize);
@@ -174,9 +169,6 @@ void dict_insert(u64 key, u64 value) {
  *  The function returns -1 if there are more than `maxval` results.
  */
 int dict_probe(u64 key, int maxval, u64 values[]) {
-    // printf("bonjour\n");
-    // dict_size=size;
-    // printf("proc%d dict_size=%llu\n",world_rank,dict_size);
     u32 k = key % PRIME;
     u64 h = murmur64(key) % dict_size;
     int nval = 0;
@@ -273,7 +265,7 @@ int compar(const void *p1, const void *p2) {
 /* search the "golden collision" */
 int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
 
-    // Creation d'un datatype pour le struct clefvaleur
+    // Creation d'un datatype MPI pour le struct clefvaleur
     const int nitems = 2;
     int blocklenght[2] = {1, 1};
     MPI_Datatype types[2] = {MPI_UINT64_T, MPI_UINT64_T};
@@ -292,6 +284,7 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
 
     u64 N = 1ull << n;
 
+    //petit_N correspondra au nombre de paires de clé/valeur gérées par chaque processeur
     u64 petit_N = N / world_size;
     u64 reste = N % world_size;
 
@@ -334,19 +327,18 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
     if (world_rank == 0)
         printf("Quick sorting...\n");
 
-    // range le tableau selon le numéro de proccus auquel il faut l'aligner
+    // range le tableau tab selon le numéro de processus associé à chaque paire clé/valeur (par ordre croissant)
     // afin de l'envoyer avec MPI_Alltoallv
     qsort(tab, petit_N, sizeof(clefvaleur), compar);
 
     double time_after_qsort1 = wtime();
 
-    // Taille recue depuis chaque processus
+    // Envoie et réception des tailles associées au tab de chaque processeur
     MPI_Alltoall(tailles, 1, MPI_INT, taille_recue, 1, MPI_INT, MPI_COMM_WORLD);
 
-    // Calcul de la taille totale du tableau avec les tailles recues et du
-    // displs
-    // C'est le cumsum des tailles pour les strides
-    // pareil pour l'autre displs
+    // Calcul de la taille totale du tableau reçu (sum_recu)
+    // Calcul des displacement envoyés (resp reçus) en faisant la somme cumulative
+    // de tailles (resp taille_recu): displs (resp displs_recue)
     int sum = 0;
     int sum_recu = 0;
     int displs[world_size];
@@ -359,30 +351,19 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
     }
 
     // Envoi des struct clefvaleur, avec toutes les clefs valeurs au bon endroit
-    // clefvaleur tab_recu[sum_recu];
     clefvaleur *tab_recu = (clefvaleur *)malloc(sizeof(clefvaleur) * sum_recu);
     MPI_Alltoallv(tab, tailles, displs, MPI_CLEFVALEUR_TYPE, tab_recu,
                   taille_recue, displs_recue, MPI_CLEFVALEUR_TYPE,
                   MPI_COMM_WORLD);
 
-    // printf("Check: proc %d, sum_recu = %d\n", world_rank, sum_recu);
-
     if (world_rank == 0)
         printf("Dictionary setup...\n");
 
-    // printf("sum recu: %d\n", sum_recu);
-
-    // LE 1.5* est nécessaire pour des n petits, sinon utiliser 1.125
-    // dict_setup(1.5 * sum_recu);
-    // dict_setup(1.125 * sum_recu);
-    // dict_setup( 1.5*N / world_size);
-    // dict_setup(1.125*N);
-    // dict_setup(11);
-    // EN FONCTION DU MULTIPLICATEUR ET DE LA TAILLE ALLOUée EN PLUS NON
-    // NéCESSAIRE LE TEMPS DE PROBING EST DIFFéRENT si il y a que sum_recu, ca
-    // ne marche pas, il faut au minimum sum_recu + 1 Et avec un test pour --n
-    // 15 sur 4 coeurs, on gagne jusqu'à 15s (je crois) avec le x2 Mais entre le
-    // x1.5 et le x2 il y a que 1s de différence
+    //Attention le multiplicateur dans dict_setup joue un rôle dans le temps de dictprobe (on remarque que
+    // plus le multiplicateur est grand plus dictprobe est rapide). De plus, sans multiplicateur
+    //assert(nx >= 0) est faux
+    // dict_setup(1.25 * sum_recu);
+    //dict_setup(2 * sum_recu);
     dict_setup(sum_recu * 1.5);
 
     if (world_rank == 0)
@@ -393,7 +374,6 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
         dict_insert(tab_recu[i].k, tab_recu[i].v);
     }
 
-    // free(tab);
     free(tab_recu);
 
     double time_mid = wtime();
@@ -403,10 +383,8 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
     u64 ncandidates = 0;
     u64 x[256];
 
-    if (world_rank == 0)
-        printf("Calculating g...\n");
 
-    // Calcul de la deuxième boucle
+    // Calcul de la deuxième boucle avec la même méthode qu'à la première boucle
 
     // Réinitialisation des tableaux pour envoyer les tailles
     for (int i = 0; i < world_size; i++) {
@@ -414,6 +392,8 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
         taille_recue[i] = 0;
     }
 
+    if (world_rank == 0)
+            printf("Calculating g...\n");
     indice = 0;
     for (u64 z = begin; z < end; z++) {
         u64 y = g(z);
@@ -454,12 +434,11 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
     if (world_rank == 0)
         printf("Probing + is good pair...\n");
 
-    // Probing du dictionnaire dans chaque processus, qui contient chacun les
-    // bonnes valeurs de f avec les bonnes valeurs de g
+    // Probing dans le dictionnaire de chaque processus, qui contient chacun ses
+    // valeurs de f associées, avec ses valeurs de g associées
     for (int j = 0; j < sum_recu; j++) {
         u64 im = tab_recu[j].k;
         int nx = dict_probe(im, 256, x);
-
         assert(nx >= 0);
         ncandidates += nx;
         for (int i = 0; i < nx; i++)
@@ -469,15 +448,14 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
                 k1[nres] = x[i];
                 k2[nres] = tab_recu[j].v;
                 printf("SOLUTION FOUND!\n");
-                printf("Sol: %lu, %lu", x[i], tab_recu[j].v);
+                printf("Sol: %lu, %lu\n", x[i], tab_recu[j].v);
                 nres += 1;
             }
     }
-    free(tab_recu);
 
     double time_end = wtime();
+    free(tab_recu);
 
-    // TODO: Moyenne de taille des dictionnaires + min + max
 
     // Enregistrement des données dans le CSV.
     // Seulement les valeurs du processus 0 sont enregistrées, car on suppose
@@ -557,20 +535,12 @@ void process_command_line_options(int argc, char **argv) {
 
 int main(int argc, char **argv) {
 
-    // u64 ull = (1ull << 32) - 1;
-    // printBits(sizeof(ull), &ull);
-    // printf("\n");
-
     root = 0;
     MPI_Init(&argc, &argv);
 
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-    // voir si il est pas judicieux de mettre le MPI_init après pour éviter que
-    // chacun des coeurs fasse le calcul
-    // ATTENTION si on demande qu'au process root de faire la ligne suivante, ça
-    // bug car les autres process n'auront pas accès à f et g
     process_command_line_options(argc, argv);
     if (world_rank == root) {
         output_file = fopen(output_file_path, "a");
@@ -601,8 +571,6 @@ int main(int argc, char **argv) {
         fprintf(results_file, "Results:\n");
     }
 
-    // printf("n: %lu; n_process:%lu\n", n, n_process);
-    // dict_setup(1.125 * (1ull << n));
 
     /* search */
     u64 k1[16], k2[16];
