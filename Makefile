@@ -1,6 +1,6 @@
 # tool macros
 CC := mpicc
-CFLAGS := # FILL: compile flags
+CFLAGS := -O3# FILL: compile flags
 
 # path macros
 BIN_PATH := bin
