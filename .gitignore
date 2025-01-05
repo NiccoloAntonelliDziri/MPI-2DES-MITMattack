@@ -2,6 +2,10 @@ bin/
 debug/
 obj/
 
+.DS_Store
+.gitignore
+.vscode/
+
 # Prerequisites
 *.d
 
