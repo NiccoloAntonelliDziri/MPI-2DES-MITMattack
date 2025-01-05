@@ -1,70 +1,165 @@
 
-2024-12-30 13:21:17
-Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+2025-01-03 14:02:26
+Running with n=27, C0=(b5252485, c270079a) and C1=(0bda3c2b, 973a7fea)
 Results:
-Solution found: (4bd3, c49)
+Solution found: (299d4e7, 4afe382)
 
-2024-12-30 13:21:20
-Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+2025-01-03 14:03:04
+Running with n=27, C0=(b5252485, c270079a) and C1=(0bda3c2b, 973a7fea)
 Results:
-Solution found: (1c0, 4f67)
+Solution found: (299d4e7, 4afe382)
 
-2024-12-30 13:37:13
-Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+2025-01-03 14:03:31
+Running with n=27, C0=(b5252485, c270079a) and C1=(0bda3c2b, 973a7fea)
 Results:
-Solution found: (4bd3, c49)
+Solution found: (299d4e7, 4afe382)
 
-2024-12-30 13:37:16
-Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+2025-01-03 14:03:49
+Running with n=27, C0=(b5252485, c270079a) and C1=(0bda3c2b, 973a7fea)
 Results:
-Solution found: (1c0, 4f67)
+Solution found: (299d4e7, 4afe382)
 
-2024-12-30 13:37:25
-Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+2025-01-03 14:04:04
+Running with n=27, C0=(b5252485, c270079a) and C1=(0bda3c2b, 973a7fea)
 Results:
-Solution found: (4bd3, c49)
+Solution found: (299d4e7, 4afe382)
 
-2024-12-30 13:37:28
-Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+2025-01-03 14:04:51
+Running with n=27, C0=(b5252485, c270079a) and C1=(0bda3c2b, 973a7fea)
 Results:
-Solution found: (1c0, 4f67)
+Solution found: (299d4e7, 4afe382)
 
-2024-12-30 13:41:05
-Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+2025-01-03 14:05:10
+Running with n=27, C0=(b5252485, c270079a) and C1=(0bda3c2b, 973a7fea)
 Results:
-Solution found: (4bd3, c49)
+Solution found: (299d4e7, 4afe382)
 
-2024-12-30 13:41:08
-Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+2025-01-03 14:05:22
+Running with n=27, C0=(b5252485, c270079a) and C1=(0bda3c2b, 973a7fea)
 Results:
-Solution found: (1c0, 4f67)
+Solution found: (299d4e7, 4afe382)
 
-2024-12-30 13:41:11
-Running with n=5, C0=(4e84bb7d, fe1563ba) and C1=(5d20396a, b6c9f840)
+2025-01-03 14:05:33
+Running with n=27, C0=(b5252485, c270079a) and C1=(0bda3c2b, 973a7fea)
 Results:
-Solution found: (6, 1f)
+Solution found: (299d4e7, 4afe382)
 
-2024-12-30 17:52:02
-Running with n=15, C0=(f59f24fe, 396206bc) and C1=(a7e724f6, 974d0659)
+2025-01-03 14:05:44
+Running with n=27, C0=(b5252485, c270079a) and C1=(0bda3c2b, 973a7fea)
 Results:
-Solution found: (3e40, 6118)
+Solution found: (299d4e7, 4afe382)
 
-2024-12-30 17:52:14
-Running with n=15, C0=(f59f24fe, 396206bc) and C1=(a7e724f6, 974d0659)
+2025-01-03 14:05:55
+Running with n=27, C0=(b5252485, c270079a) and C1=(0bda3c2b, 973a7fea)
 Results:
-Solution found: (3e40, 6118)
+Solution found: (299d4e7, 4afe382)
 
-2024-12-31 11:30:48
-Running with n=15, C0=(acc94947, 53083a3a) and C1=(8cf647a0, 38288350)
+2025-01-03 14:06:04
+Running with n=28, C0=(77e21130, 31b7f984) and C1=(ce568234, 7c46aef0)
 Results:
-Solution found: (4bd3, c49)
+Solution found: (b318e38, 27b13aa)
 
-2024-12-31 11:30:50
-Running with n=15, C0=(1024b47a, 001a91d9) and C1=(eaf492e1, 888e5a6d)
+2025-01-03 14:07:17
+Running with n=28, C0=(77e21130, 31b7f984) and C1=(ce568234, 7c46aef0)
 Results:
-Solution found: (1c0, 4f67)
+Solution found: (b318e38, 27b13aa)
 
-2024-12-31 11:30:52
-Running with n=5, C0=(4e84bb7d, fe1563ba) and C1=(5d20396a, b6c9f840)
+2025-01-03 14:08:05
+Running with n=28, C0=(77e21130, 31b7f984) and C1=(ce568234, 7c46aef0)
 Results:
-Solution found: (6, 1f)
+Solution found: (b318e38, 27b13aa)
+
+2025-01-03 14:08:35
+Running with n=28, C0=(77e21130, 31b7f984) and C1=(ce568234, 7c46aef0)
+Results:
+Solution found: (b318e38, 27b13aa)
+
+2025-01-03 14:10:17
+Running with n=28, C0=(77e21130, 31b7f984) and C1=(ce568234, 7c46aef0)
+Results:
+Solution found: (b318e38, 27b13aa)
+
+2025-01-03 14:10:32
+Running with n=28, C0=(77e21130, 31b7f984) and C1=(ce568234, 7c46aef0)
+Results:
+Solution found: (b318e38, 27b13aa)
+
+2025-01-03 14:10:46
+Running with n=28, C0=(77e21130, 31b7f984) and C1=(ce568234, 7c46aef0)
+Results:
+Solution found: (b318e38, 27b13aa)
+
+2025-01-03 14:11:00
+Running with n=28, C0=(77e21130, 31b7f984) and C1=(ce568234, 7c46aef0)
+Results:
+Solution found: (b318e38, 27b13aa)
+
+2025-01-03 14:11:14
+Running with n=28, C0=(77e21130, 31b7f984) and C1=(ce568234, 7c46aef0)
+Results:
+Solution found: (b318e38, 27b13aa)
+
+2025-01-03 14:11:27
+Running with n=29, C0=(5331c2ce, c956677f) and C1=(f5f9d870, 6b68959e)
+Results:
+Solution found: (13fa7b6, 5e33d02)
+
+2025-01-03 14:13:53
+Running with n=29, C0=(5331c2ce, c956677f) and C1=(f5f9d870, 6b68959e)
+Results:
+Solution found: (13fa7b6, 5e33d02)
+
+2025-01-03 14:15:23
+Running with n=29, C0=(5331c2ce, c956677f) and C1=(f5f9d870, 6b68959e)
+Results:
+Solution found: (13fa7b6, 5e33d02)
+
+2025-01-03 14:16:18
+Running with n=29, C0=(5331c2ce, c956677f) and C1=(f5f9d870, 6b68959e)
+Results:
+Solution found: (13fa7b6, 5e33d02)
+
+2025-01-03 14:18:29
+Running with n=29, C0=(5331c2ce, c956677f) and C1=(f5f9d870, 6b68959e)
+Results:
+Solution found: (13fa7b6, 5e33d02)
+
+2025-01-03 14:18:52
+Running with n=29, C0=(5331c2ce, c956677f) and C1=(f5f9d870, 6b68959e)
+Results:
+Solution found: (13fa7b6, 5e33d02)
+
+2025-01-03 14:19:13
+Running with n=29, C0=(5331c2ce, c956677f) and C1=(f5f9d870, 6b68959e)
+Results:
+Solution found: (13fa7b6, 5e33d02)
+
+2025-01-03 14:19:32
+Running with n=29, C0=(5331c2ce, c956677f) and C1=(f5f9d870, 6b68959e)
+Results:
+Solution found: (13fa7b6, 5e33d02)
+
+2025-01-03 14:19:49
+Running with n=29, C0=(5331c2ce, c956677f) and C1=(f5f9d870, 6b68959e)
+Results:
+Solution found: (13fa7b6, 5e33d02)
+
+2025-01-03 14:20:16
+Running with n=30, C0=(145f7475, 8b17fc8f) and C1=(47361383, d32611ee)
+Results:
+Solution found: (1a93c4fb, bcb306b)
+
+2025-01-03 14:25:13
+Running with n=30, C0=(145f7475, 8b17fc8f) and C1=(47361383, d32611ee)
+Results:
+Solution found: (1a93c4fb, bcb306b)
+
+2025-01-03 14:28:11
+Running with n=30, C0=(145f7475, 8b17fc8f) and C1=(47361383, d32611ee)
+Results:
+Solution found: (1a93c4fb, bcb306b)
+
+2025-01-03 14:29:57
+Running with n=30, C0=(145f7475, 8b17fc8f) and C1=(47361383, d32611ee)
+Results:
+Solution found: (1a93c4fb, bcb306b)

@@ -38,6 +38,7 @@ u32 C[2][2];
 int world_size;
 int world_rank;
 int root;
+float dict_multiplicateur;
 
 char *output_file_path = "output.csv";
 FILE *output_file;
@@ -362,8 +363,8 @@ int golden_claw_search(int maxres, u64 k1[], u64 k2[]) {
     //Attention le multiplicateur dans dict_setup joue un rôle dans le temps de dictprobe (on remarque que
     // plus le multiplicateur est grand plus dictprobe est rapide). De plus, sans multiplicateur
     //assert(nx >= 0) est faux
-    // dict_setup(1.25 * sum_recu);
-    //dict_setup(2 * sum_recu);
+    
+    dict_multiplicateur=1.5;
     dict_setup(sum_recu * 1.5);
 
     if (world_rank == 0)
