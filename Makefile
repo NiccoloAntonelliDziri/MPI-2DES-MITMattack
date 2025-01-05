@@ -20,11 +20,11 @@ default: makedir all
 # non-phony targets
 $(TARGET_IT): $(SRC_PATH)/mitm.c
 	@echo Programme séquentiel:
-	$(CC) $< $(CFLAGS) -o $@ $(CFLAGS)
+	$(CC) $< -o $@ $(CFLAGS)
 
 $(TARGET_PAR): $(SRC_PATH)/mitm_paral.c
 	@echo Programme parallèle:
-	$(CC) $< $(CFLAGS) -o $@ $(CFLAGS)
+	$(CC) $< -o $@ $(CFLAGS)
 
 # phony rules
 .PHONY: makedir
